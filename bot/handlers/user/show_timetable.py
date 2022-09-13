@@ -18,8 +18,8 @@ async def timetable_for_today__button(
         redis__db_2: RedisStorage
 ):
     college_group = await get_college_group(message.from_user.id, session_pool, redis__db_1)
-    # timetable = Timetable(load_config().excel_file, college_group).prepare_dataframe()
-    # await redis__db_2.set_data('timetable', {college_group: timetable})
+    timetable = Timetable(load_config().excel_file, college_group).prepare_dataframe()
+    await redis__db_2.set_data('timetable', {college_group: timetable})
 
     timetable_data = await redis__db_2.get_data('timetable')
     timetable = timetable_data[college_group]
