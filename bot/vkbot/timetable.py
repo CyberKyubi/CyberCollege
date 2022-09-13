@@ -38,7 +38,7 @@ class Timetable:
         )
         study_days_df.drop(self.group, axis=1, inplace=True)
 
-        study_days_df.to_excel('/home/wither/PycharmProjects/college_timetable/bot/excel_file/our_timetable.xlsx')
+        # study_days_df.to_excel('/home/wither/PycharmProjects/college_timetable/bot/excel_file/our_timetable.xlsx')
         timetable = self.parse_dataframe(study_days_df, weekends)
         return timetable
 
