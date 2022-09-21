@@ -66,7 +66,7 @@ class BotMessages:
                             '📖 {subject}\n' \
                             '👨‍🏫  {teacher} / {cabinet}\n' \
                             '🏫 ({college_building})\n\n'
-    weekend = 'В этот день выходной!'
+    weekend = 'В этот день выходной!\n\n'
     break_timetable = '---⏰---\n' \
                       '1. 8.00-9.10\n' \
                       '2. 9.20-10.30\n' \
