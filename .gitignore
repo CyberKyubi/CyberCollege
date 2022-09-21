@@ -144,4 +144,5 @@ dmypy.json
 .idea/vcs.xml
 
 # college timetable
-/bot/excel_file/timetable.xls
+/bot/excel_file/timetable_1.xls
+/bot/excel_file/timetable_2.xls
