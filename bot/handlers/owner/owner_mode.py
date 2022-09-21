@@ -44,18 +44,35 @@ async def deploy__button(message: Message, state: FSMContext):
     await state.set_state(DeployStates.excel_file_input)
 
 
-async def deploy__input(message: Message, state: FSMContext, session_pool, redis__db_1: RedisStorage, album: list):
+async def deploy__input(
+        message: Message,
+        state: FSMContext,
+        session_pool,
+        redis__db_1: RedisStorage,
+        redis__db_2: RedisStorage,
+        album: list
+):
     paths = [load_config().excel_file_1, load_config().excel_file_2]
     finished, pending = await asyncio.wait(
         [download_file(message, document.file_id, path) for document, path in zip(album, paths)]
     )
     if pending:
         await asyncio.sleep(0.3)
-    else:
-        await deploy(finished, message, state, session_pool, redis__db_1)
+
+    await deploy(finished, message, state, session_pool, redis__db_1, redis__db_2)
 
 
-async def deploy(finished, message: Message, state: FSMContext, session_pool, redis__db_1: RedisStorage):
+async def deploy(
+        finished,
+        message: Message,
+        state: FSMContext,
+        session_pool,
+        redis__db_1: RedisStorage,
+        redis__db_2: RedisStorage
+):
+    await redis__db_1.delete_all_data()
+    await redis__db_2.delete_all_data()
+
     paths = [task.result() for task in finished]
     college_groups__redis, college_groups__db = {}, []
     for path in paths:
