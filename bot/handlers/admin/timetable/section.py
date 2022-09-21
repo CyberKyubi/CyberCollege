@@ -113,7 +113,7 @@ async def prepare_new_timetable(
             for college_building, timetable in new_timetable.items():
                 update_old_timetable = old_timetable[college_building]
                 result = tuple(map(update_old_week, timetable.items(), update_old_timetable.items()))
-                [update_old_timetable.update(timetable_on_group) for timetable_on_group in result]
+                [update_old_timetable.update(timetable_on_group) for timetable_on_group in result if timetable_on_group]
 
             old_dates.update(end_date=new_end_date)
             old_timetable.update(dates=old_dates)
@@ -144,6 +144,9 @@ def str_to_date(date: str):
 def update_old_week(new_timetable: tuple, old_timetable: tuple):
     group, new_week = new_timetable
     _, old_week = old_timetable
+
+    if not old_week:
+        return
 
     days = ('Четверг', 'Пятница', 'Суббота')
     old_week.update({day_of_week: timetable for day_of_week, timetable in new_week.items() if day_of_week in days})
