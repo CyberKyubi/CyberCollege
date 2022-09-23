@@ -10,7 +10,7 @@ from states.user_state_machine import MainMenuStates, UserTimetableSectionStates
 from storages.redis.storage import RedisStorage
 from handlers.user.main_menu.menu import user__main_menu
 from handlers.user.get_user_data import get_current_group
-from utils.json_models.timetable import TimetableModel
+from utils.redis_models.timetable import TimetableModel, Status
 
 
 async def select_timetable(message: Message, state: FSMContext, redis__db_2: RedisStorage):
@@ -88,12 +88,12 @@ async def timetable_for_today__button(message: Message, redis__db_1: RedisStorag
     timetable_model = TimetableModel(**timetable)
 
     # Проверка 2. Если расписания нет. #
-    if timetable_model.status == 'unknown':
+    if timetable_model.status == Status.unknown:
         await message.answer(BotErrors.still_no_timetable)
         return
 
     # Проверка 3. Если сегодня выходной. #
-    if timetable_model.status == 'weekend':
+    if timetable_model.status == Status.weekend:
         await message.answer(BotMessages.weekend__when.format(when=BotMessages.today__when))
         return
 
@@ -137,12 +137,12 @@ async def timetable_for_tomorrow__button(message: Message, redis__db_1: RedisSto
         return
 
     # Проверка 3. Если расписания нет. #
-    if timetable_model.status == 'unknown':
+    if timetable_model.status == Status.unknown:
         await message.answer(BotErrors.still_no_timetable)
         return
 
     # Проверка 4. Если завтра выходной. #
-    if timetable_model.status == 'weekend':
+    if timetable_model.status == Status.weekend:
         await message.answer(BotMessages.weekend__when.format(when=BotMessages.tomorrow__when))
         return
 
@@ -173,10 +173,10 @@ async def timetable_for_week__button(message: Message, redis__db_1: RedisStorage
     count = 0
     for day_of_week, days in timetable_for_group.items():
         timetable_model = TimetableModel(**days)
-        if timetable_model.status != 'unknown':
+        if timetable_model.status != Status.unknown:
             count += 1
             args = (day_of_week, timetable_model.date_str)
-            day = generate_study_day(timetable=days['timetable'], *args) if timetable_model.status == 'study_day' \
+            day = generate_study_day(timetable=days['timetable'], *args) if timetable_model.status == Status.study_day \
                 else generate_weekend(*args)
             week += day if count == 1 else BotMessages.delimiter + '\n\n' + day
 
@@ -226,12 +226,12 @@ async def timetable_for_day__input(message: Message, redis__db_1: RedisStorage, 
         await message.answer(BotMessages.timetable_is_old)
 
     # Проверка 1. Если расписания нет. #
-    if timetable_model.status == 'unknown':
+    if timetable_model.status == Status.unknown:
         await message.answer(BotErrors.still_no_timetable)
         return
 
     # Проверка 2. Если выходной. #
-    if timetable_model.status == 'weekend':
+    if timetable_model.status == Status.weekend:
         await message.answer(BotMessages.weekend)
         return
 

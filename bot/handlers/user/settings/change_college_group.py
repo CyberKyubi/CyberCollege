@@ -10,7 +10,7 @@ from storages.redis.storage import RedisStorage
 from handlers.user.settings.settings import settings__section
 from handlers.user.main_menu.menu import user__main_menu
 from handlers.user.get_user_data import to_model
-from utils.json_models.user_data import UserModel, GroupInfoModel
+from utils.redis_models.user_data import UserModel, GroupInfoModel
 
 
 async def change_college_group__section(message: Message, state: FSMContext, redis__db_1: RedisStorage):

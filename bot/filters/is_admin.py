@@ -3,7 +3,7 @@ from typing import Optional
 from aiogram.dispatcher.filters import BoundFilter
 from aiogram.types import Message
 
-from config import load_config
+from utils.jsons.work_with_json import read_json
 
 
 class AdminFilter(BoundFilter):
@@ -13,5 +13,5 @@ class AdminFilter(BoundFilter):
         self.is_admin = is_admin
 
     async def check(self, message: Message):
-        admins_id = load_config().tgbot.admins_id
-        return message.from_user.id in admins_id
+        admins = read_json('admins.json')
+        return message.from_user.id in admins

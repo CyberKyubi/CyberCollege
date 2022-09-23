@@ -37,15 +37,6 @@ async def insert__new_user(session_pool, user_id: int, college_group: str, colle
         await session.commit()
 
 
-async def insert__college_groups(session_pool, groups: list):
-    async with session_pool() as session:
-        await session.execute(
-            insert(CollegeGroups)
-            .values(groups)
-        )
-        await session.commit()
-
-
 async def select__user_data(session_pool, user_id: int) -> str:
     async with session_pool() as session:
         response = await session.execute(
@@ -54,3 +45,19 @@ async def select__user_data(session_pool, user_id: int) -> str:
         )
     if response:
         return response.one()
+
+
+async def truncate__tables(session_pool):
+    async with session_pool() as session:
+        await session.execute("TRUNCATE college_groups RESTART IDENTITY CASCADE")
+        await session.execute("TRUNCATE users RESTART IDENTITY")
+        await session.commit()
+
+
+async def insert__college_groups(session_pool, groups: list):
+    async with session_pool() as session:
+        await session.execute(
+            insert(CollegeGroups)
+            .values(groups)
+        )
+        await session.commit()

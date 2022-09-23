@@ -3,10 +3,39 @@ class BotMessages:
     Класс со всеми сообщениями бота.
     """
     # Создатель #
+    # Главное меню и разделы #
     owner__main_menu = 'Рад тебя снова видеть, Люцик!'
+    change_role__section = '^👨🏼‍🎓^  RoLes  ^🧙🏼‍♂^'
+    owner__section = '🧛🏻 Owners:\n\n'
+    deploy__section = '🛠 Execute functions in order:'
 
-    excel_file_input = 'Отправь мне файлы с расписанием, чтобы взять группы из них:'
-    deploy = 'Группы добавлены!'
+    # Owners Section #
+    owner = '{number}) {mention}\n' \
+            '<i><code>{user_id}</code></i>\n'
+
+    add_owner = '➕🧛🏻 Add owner\n' \
+                'Напиши <i><code>user_id</code></i>:'
+    delete_owner = '➖🧛🏻 Delete owner\n' \
+                   'Напиши <i><code>user_id</code></i>:'
+    owner_added = 'Owned added!'
+    owner_deleted = 'Owner deleted'
+    you_have_been_added_to_owner_role = 'Ты добавлен в роль: 🧛🏻 Owner'
+    you_have_been_delete_from_owner_role = 'Тебя удалили из роли: 🧛🏻 Owner\n' \
+                                           'Вызови команду /start, чтобы перейти в меню студента'
+
+    # Deploy #
+    confirm_your_action = 'Подтверди свое действие:\n' \
+                          '{action}'
+    truncate_storages__action = 'Ты действительно хочешь очистить хранилища?'
+    storages_cleared = 'Хранилища очищены!'
+
+    excel_files = 'Отправь два файла с расписание по одному:'
+    received_documents = 'Получил документы'
+    groups = 'Группы:\n'
+    received_groups = '{building}\n' \
+                      '{groups}\n\n'
+    redis_is_ready = 'Redis заполнен'
+
     message_from = 'Сообщение от студента:\n' \
                    'user_id: {}\n' \
                    'Группа: {}\n' \
@@ -101,6 +130,8 @@ class BotMessages:
     delete_groups = 'Кликни по группе, которую хочешь удалить:'
     group_deleted = 'Группа удалена!'
 
+    message_sent = 'Сообщение отправлено!'
+
 
 class BotButtons:
     """
@@ -112,14 +143,30 @@ class BotButtons:
     back_to_main_menu = '🏠 Назад в главное меню'
     back_to_timetable = '📖 Назад к расписанию'
 
+    yes = 'Да'
+    no = 'Нет'
+    confirm_your_action__markup = [yes, no, back]
+
     # Создатель #
-    owner_mode = '🧛🏻 Owner Mode'
+    owner_role = '🧛🏻 Owner Role'
 
-    user_mode = '👨🏼‍🎓 User Mode'
-    admin_mode = '🧙🏼‍♂️ Admin Mode'
-    owner_main_menu__markup = [user_mode, admin_mode]
+    change_role = '👨🏼‍🎓🧙🏼‍♂️ Change role'
+    owners = '🧛🏻 Owners'
+    deploy = '👨🏽‍💻 Deploy'
+    owner_main_menu__markup = [change_role, owners, deploy]
 
-    deploy = '💻 Deploy'
+    user_role = '👨🏼‍🎓 User Role'
+    admin_role = '🧙🏼‍♂️ Admin Role'
+    change_role__markup = [user_role, admin_role, back_to_main_menu]
+
+    add_owner = '➕🧛🏻 Add owner'
+    delete_owner = '➖🧛🏻 Delete owner'
+    owners_section__markup = [add_owner, delete_owner, back_to_main_menu]
+
+    truncate_storages = '🗑 Truncate storages'
+    add_groups = '➕📚 Add groups'
+    fill_redis = '📝 Fill Redis'
+    deploy_section__markup = [truncate_storages, add_groups, fill_redis, back_to_main_menu]
 
     # Админ #
     admin_timetable = '📖 Расписание'
@@ -173,6 +220,13 @@ class BotButtons:
     days_of_week__markup = [monday, tuesday, wednesday, friday, saturday]
 
     reply_markup = {
+        # Создатель #
+        'owner__main_menu': {'markup': owner_main_menu__markup, 'row_width': 2},
+        'change_role': {'markup': change_role__markup, 'row_width': 2},
+        'owners__section': {'markup': owners_section__markup, 'row_width': 2},
+        'deploy__section': {'markup': deploy_section__markup, 'row_width': 1},
+        'confirm_your_action': {'markup': confirm_your_action__markup, 'row_width': 2},
+
         # Админ #
         'admin__main_menu': {'markup': admin_main_menu__markup, 'row_width': 2},
         'admin_timetable': {'markup': admin_timetable__markup, 'row_width': 2},
@@ -200,6 +254,14 @@ class BotErrors:
     """
     Класс с ошибками во время работы бота.
     """
+    # Создатель #
+    user_id_value_error = 'Должен быть числом!'
+    you_cant_add_yourself = 'Нельзя добавить самого себя!'
+    you_cant_delete_yourself = 'Нельзя удалить самого себя!'
+    you_have_already_added_this_user = 'Этот человек уже есть!'
+    this_person_not_found = 'Этого человека нет!'
+    you_cant_delete_lucifer = 'Нельзя удалить Люцифера!'
+
     # Админ #
     received_one_excel_file = 'Я ожидаю получить группу из двух файлов'
 

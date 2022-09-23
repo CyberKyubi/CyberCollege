@@ -1,6 +1,5 @@
 import os
 from dataclasses import dataclass
-from typing import List
 
 from dotenv import dotenv_values
 
@@ -8,9 +7,8 @@ from dotenv import dotenv_values
 @dataclass
 class TgBot:
     token: str
-    admins_id: List[int]
-    owners_id: List[int]
     lucifer: int
+    doom: int
 
 
 @dataclass
@@ -34,9 +32,8 @@ def load_config():
     return Config(
         tgbot=TgBot(
             token=config.get('TOKEN'),
-            admins_id=[int(admin_id) for admin_id in config.get('ADMINS_ID').split(',')],
-            owners_id=[int(admin_id) for admin_id in config.get('OWNERS_ID').split(',')],
-            lucifer=int(config.get('LUCIFER'))
+            lucifer=int(config.get('LUCIFER')),
+            doom=int(config.get('DOOM'))
         ),
         storages=Storages(
             redis_uri__db_1=config.get('REDIS_URI__DB_1'),

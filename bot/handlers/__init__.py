@@ -1,5 +1,11 @@
-from .owner.cmd_start import register_owner__cmd_start
-from .owner.owner_mode import register_owner_mode
+from .owner.main_menu.cmd_start import register_owner__cmd_start
+from .owner.main_menu.menu import register_owner__main_menu
+from .owner.change_role.change_role import register_change_role__section
+from .owner.owners_section.owners import register_owners__section
+from .owner.deploy.deploy import register_deploy__section
+from .owner.deploy.truncate_storages import register_truncate_storages
+from .owner.deploy.add_groups import register_add_groups
+from .owner.deploy.fill_redis import register_fill_redis
 
 from .admin.main_menu.cmd_start import register_admin__cmd_start
 from .admin.timetable.section import register_admin_timetable__section
@@ -15,7 +21,13 @@ from .user.settings.send_message_to_lucifer import register_send_message_to_luci
 
 def register_handlers(dp):
     register_owner__cmd_start(dp)
-    register_owner_mode(dp)
+    register_owner__main_menu(dp)
+    register_change_role__section(dp)
+    register_owners__section(dp)
+    register_deploy__section(dp)
+    register_truncate_storages(dp)
+    register_add_groups(dp)
+    register_fill_redis(dp)
 
     register_admin__cmd_start(dp)
     register_admin_timetable__section(dp)

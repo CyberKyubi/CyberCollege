@@ -3,13 +3,6 @@ from aiogram.types import ReplyKeyboardMarkup
 from locales.ru import BotButtons
 
 
-def owner_main_menu_markup():
-    markup = ReplyKeyboardMarkup(row_width=2, resize_keyboard=True, selective=True)
-    markup.row(BotButtons.user_mode, BotButtons.admin_mode)
-    markup.row(BotButtons.deploy)
-    return markup
-
-
 def main_menu_markup(role: str = 'User', alter_role=False):
     markup = ReplyKeyboardMarkup(row_width=2, resize_keyboard=True, selective=True)
     buttons = BotButtons.user_main_menu__markup
@@ -18,7 +11,7 @@ def main_menu_markup(role: str = 'User', alter_role=False):
     [markup.insert(button) for button in buttons]
 
     if alter_role:
-        markup.row(BotButtons.owner_mode)
+        markup.row(BotButtons.owner_role)
     return markup
 
 
@@ -38,6 +31,7 @@ def back_to_main_menu():
     markup = ReplyKeyboardMarkup(row_width=1, resize_keyboard=True, selective=True)
     markup.add(BotButtons.back_to_main_menu)
     return markup
+
 
 def reply_markup(key: str) -> ReplyKeyboardMarkup:
     keyboard = BotButtons.reply_markup[key]

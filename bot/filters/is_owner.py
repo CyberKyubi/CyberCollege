@@ -3,7 +3,7 @@ from typing import Optional
 from aiogram.dispatcher.filters import BoundFilter
 from aiogram.types import Message
 
-from config import load_config
+from utils.jsons.work_with_json import read_json
 
 
 class OwnerFilter(BoundFilter):
@@ -13,5 +13,5 @@ class OwnerFilter(BoundFilter):
         self.is_owner = is_owner
 
     async def check(self, message: Message):
-        owners_id = load_config().tgbot.owners_id
-        return message.from_user.id in owners_id
+        owners = read_json('owners.json')
+        return message.from_user.id in owners

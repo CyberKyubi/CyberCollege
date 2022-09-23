@@ -33,14 +33,15 @@ async def message_to_send__input(message: Message, state: FSMContext, redis__db_
     user_id = str(message.from_user.id)
     await redis__db_1.set_throttle_key(user_id)
 
+    await message.answer(BotMessages.message_sent)
     await settings__section(message, state)
 
     college_group, college_building = await get_default_values(message.from_user.id, redis__db_1)
     message_from = BotMessages.message_from.format(user_id, college_group, college_building)
-    lucifer = load_config().tgbot.lucifer
+    doom = load_config().tgbot.doom
     await asyncio.gather(
-        send_message(message, message_to_send=message_from, user_id=lucifer),
-        send_message(message, message_to_send=message.text, user_id=lucifer)
+        send_message(message, message_to_send=message_from, user_id=doom),
+        send_message(message, message_to_send=message.text, user_id=doom)
     )
 
 

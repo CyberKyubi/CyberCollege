@@ -1,7 +1,7 @@
 from typing import List
 
 from storages.redis.storage import RedisStorage
-from utils.json_models.user_data import UserModel
+from utils.redis_models.user_data import UserModel
 
 
 async def get_current_group(user_id: int, redis__db_1: RedisStorage, selected_timetable=False) -> List[str]:

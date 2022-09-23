@@ -153,9 +153,9 @@ def update_old_week(new_timetable: tuple, old_timetable: tuple):
     return {group: old_week}
 
 
-async def download_file(message: Message, file_id: str, path: str):
-    await message.bot.download_file_by_id(file_id, path)
-    return path
+async def download_file(message: Message, file_id: str, destination: str):
+    await message.bot.download_file_by_id(file_id, destination)
+    return destination
 
 
 async def splitting_timetable(college_buildings: dict, college_groups: dict) -> dict:
