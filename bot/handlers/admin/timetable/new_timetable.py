@@ -6,26 +6,12 @@ from aiogram.types import Message
 from aiogram.dispatcher.storage import FSMContext
 
 from locales.ru import BotMessages, BotButtons, BotErrors
-from keyboards.reply_keyboard_markup import reply_markup, back_markup
-from states.admin_state_machine import MainMenuStates, AdminTimetableSectionStates
+from keyboards.reply_keyboard_markup import back_markup
+from states.admin_state_machine import AdminTimetableSectionStates
 from handlers.admin.main_menu.menu import admin__main_menu
 from utils.timatable.timetable import Timetable
 from utils.validation.send_message import send_message
 from storages.redis.storage import RedisStorage
-from config import load_config
-
-
-async def admin_timetable__section(message: Message, state: FSMContext):
-    await message.answer(BotMessages.admin_timetable__section, reply_markup=reply_markup('admin_timetable'))
-    await state.set_state(AdminTimetableSectionStates.timetable)
-
-
-async def back_to_main_menu__button(message: Message, state: FSMContext):
-    await admin__main_menu(message, state)
-
-
-async def back__button(message: Message, state: FSMContext):
-    await admin_timetable__section(message, state)
 
 
 async def new_timetable__button(message: Message, state: FSMContext):
@@ -33,33 +19,41 @@ async def new_timetable__button(message: Message, state: FSMContext):
     await state.set_state(AdminTimetableSectionStates.new_timetable)
 
 
-async def new_timetable__input(
-        message: Message,
-        state: FSMContext,
-        redis__db_1: RedisStorage,
-        redis__db_2: RedisStorage,
-        album: list
-):
-    if len(album) == 1:
-        await message.answer(BotErrors.received_one_excel_file)
-        return
+async def preparing(files: dict, message: Message, state: FSMContext, redis__db_1: RedisStorage, redis__db_2):
+    college_groups__redis = await redis__db_1.get_data('college_groups')
+    college_groups__excel = {}
 
-    # Скачивание файлов. #
-    paths = [load_config().excel_file_1, load_config().excel_file_2]
-    finished, _ = await asyncio.wait(
-        [download_file(message, document.file_id, path) for document, path in zip(album, paths)]
-    )
-
-    # Получаем информацию об расписании. #
-    paths = [task.result() for task in finished]
+    # Собирает информацию об расписании. #
     college_buildings, dates = {}, {}
+    paths = list(files.values())
     for path in paths:
-        info, dates = Timetable(path).get_info_about_file()
+        cls = Timetable(path)
+        excel, _ = cls.get_groups()
+        college_groups__excel.update(excel)
+
+        info, dates = cls.get_info_about_file()
         college_buildings.update(info), dates.update(dates)
 
-    await message.answer(BotMessages.received_excel_files)
-    result = await prepare_new_timetable(message, redis__db_1, redis__db_2, college_buildings, dates)
-    # Эта проверка нужна, чтобы дождаться добавления нового расписания. #
+    # Ищет разницу между сохраненными группа и группами из файла расписания.
+    # Пока не знаю что с этим делать. #
+    new_groups, deleted_groups = [], []
+    for college_building, groups in college_groups__excel.items():
+        not_in_redis = list(set(groups) - set(college_groups__redis[college_building]))
+        not_in_excel = list(set(college_groups__redis[college_building]) - set(groups))
+        if not_in_redis:
+            new_groups.extend(not_in_redis)
+        if not_in_excel:
+            deleted_groups.extend(not_in_excel)
+
+    if new_groups or deleted_groups:
+        await message.answer(BotMessages.found_difference_between_data.format(
+            new=', '.join(new_groups),
+            deleted=', '.join(deleted_groups)
+        ))
+
+    # Добавляет новое расписание. #
+    await message.answer(BotMessages.splitting_timetable)
+    result = await prepare_new_timetable(message, redis__db_2, college_groups__excel, college_buildings, dates)
     if result:
         await message.answer(BotMessages.timetable_added)
         await admin__main_menu(message, state)
@@ -76,12 +70,11 @@ async def new_timetable__input(
 
 async def prepare_new_timetable(
         message: Message,
-        redis__db_1: RedisStorage,
         redis__db_2: RedisStorage,
+        college_groups: dict,
         college_buildings: dict,
         dates: dict
 ):
-    college_groups = await redis__db_1.get_data('college_groups')
     old_timetable = await redis__db_2.get_data('timetable')
 
     new_timetable = await splitting_timetable(college_buildings, college_groups)
@@ -113,7 +106,7 @@ async def prepare_new_timetable(
             for college_building, timetable in new_timetable.items():
                 update_old_timetable = old_timetable[college_building]
                 result = tuple(map(update_old_week, timetable.items(), update_old_timetable.items()))
-                [update_old_timetable.update(timetable_on_group) for timetable_on_group in result if timetable_on_group]
+                [update_old_timetable.update(timetable_on_group) for timetable_on_group in result]
 
             old_dates.update(end_date=new_end_date)
             old_timetable.update(dates=old_dates)
@@ -131,9 +124,14 @@ async def prepare_new_timetable(
             return True
 
 
-async def insert_new_timetable(key: str, new_timetable: dict, start_date, end_date, redis__db_2: RedisStorage):
-    new_timetable.update(dates=dict(start_date=start_date, end_date=end_date))
-    await redis__db_2.set_data(key, new_timetable)
+async def splitting_timetable(college_buildings: dict, college_groups: dict) -> dict:
+    [college_buildings[key].update(college_groups=college_groups) for key, college_groups in college_groups.items()]
+
+    timetable = {}
+    for college_building, values in college_buildings.items():
+        cls = Timetable(excel_file=values['path'], default_college_building=college_building)
+        timetable[college_building] = cls.timetable(values['college_groups'])
+    return timetable
 
 
 def str_to_date(date: str):
@@ -145,54 +143,19 @@ def update_old_week(new_timetable: tuple, old_timetable: tuple):
     group, new_week = new_timetable
     _, old_week = old_timetable
 
-    if not old_week:
-        return
-
     days = ('Четверг', 'Пятница', 'Суббота')
     old_week.update({day_of_week: timetable for day_of_week, timetable in new_week.items() if day_of_week in days})
     return {group: old_week}
 
 
-async def download_file(message: Message, file_id: str, destination: str):
-    await message.bot.download_file_by_id(file_id, destination)
-    return destination
+async def insert_new_timetable(key: str, new_timetable: dict, start_date, end_date, redis__db_2: RedisStorage):
+    new_timetable.update(dates=dict(start_date=start_date, end_date=end_date))
+    await redis__db_2.set_data(key, new_timetable)
 
 
-async def splitting_timetable(college_buildings: dict, college_groups: dict) -> dict:
-    [college_buildings[key].update(college_groups=college_groups) for key, college_groups in college_groups.items()]
-
-    timetable = {}
-    for college_building, values in college_buildings.items():
-        cls = Timetable(excel_file=values['path'], default_college_building=college_building)
-        timetable[college_building] = cls.timetable(values['college_groups'])
-    return timetable
-
-
-def register_admin_timetable__section(dp: Dispatcher):
-    dp.register_message_handler(
-        admin_timetable__section,
-        text=BotButtons.admin_timetable,
-        state=MainMenuStates.main_menu
-    )
-
-    dp.register_message_handler(
-        back_to_main_menu__button,
-        text=BotButtons.back_to_main_menu,
-        state=AdminTimetableSectionStates.timetable
-    )
-    dp.register_message_handler(
-        back__button,
-        text=BotButtons.back,
-        state=AdminTimetableSectionStates.new_timetable
-    )
-
+def register_new_timetable(dp: Dispatcher):
     dp.register_message_handler(
         new_timetable__button,
         text=BotButtons.add_timetable,
         state=AdminTimetableSectionStates.timetable
-    )
-    dp.register_message_handler(
-        new_timetable__input,
-        content_types=['document'],
-        state=AdminTimetableSectionStates.new_timetable
     )
