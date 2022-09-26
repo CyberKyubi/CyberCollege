@@ -30,6 +30,7 @@ class RedisStorage:
         """
         async with self._redis_conn as redis:
             key = self.generate_key(user_id, 'throttling')
+            logging.info(f'Redis instance [{redis}] | key [{key}] | Запись данных.')
             await redis.setex(key, 3600, json.dumps('throttled'))
         logging.info(f'Студент [{user_id} throttled]')
 
@@ -41,6 +42,7 @@ class RedisStorage:
         """
         redis = self._redis_conn
         key = self.generate_key(user_id, 'throttling')
+        logging.info(f'Redis instance [{redis}] | key [{key}] | Получение данных.')
         result = await redis.get(key)
         data = json.loads(result) if result else {}
         return data

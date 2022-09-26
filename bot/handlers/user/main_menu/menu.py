@@ -8,6 +8,13 @@ from utils.jsons.work_with_json import read_json
 
 
 async def user__main_menu(message: Message, state: FSMContext, college_group: str):
+    """
+    Главное меню user role. Если user_id есть в owner.json, то добавляется кнопка для смены роли.
+    :param message:
+    :param state:
+    :param college_group:
+    :return:
+    """
     reply_markup = main_menu_markup()
     owners = read_json('owners.json')
     if message.from_user.id in owners:

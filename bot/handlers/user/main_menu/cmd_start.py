@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Dispatcher
 from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.dispatcher.filters.builtin import CommandStart
@@ -17,6 +19,7 @@ async def user__cmd_start(message: Message, state: FSMContext, redis__db_1: Redi
     # Зарегистрирован ли студент #
     user_id = str(message.from_user.id)
     if user_id not in users_id:
+        logging.info(f"User [{message.from_user.id}] впервые зашел в бота!")
         await message.answer(BotMessages.college_group__input, reply_markup=ReplyKeyboardRemove())
         await state.set_state(RegistrationStates.college_group__input)
         return

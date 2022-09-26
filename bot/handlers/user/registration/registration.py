@@ -21,6 +21,7 @@ async def college_group__input(message: Message, state: FSMContext, session_pool
     :param redis__db_1:
     :return:
     """
+    logging.info("Добавляю нового студента.")
     users, college_groups = await redis__db_1.get_multiple_data('users', 'college_groups')
     users_data = users.get('users_data')
     user_id = str(message.from_user.id)
@@ -32,6 +33,8 @@ async def college_group__input(message: Message, state: FSMContext, session_pool
         college_building = 'Курчатова,16'
     else:
         await message.answer(BotErrors.college_group_not_found)
+        logging.error("Ошибка при добавлении нового студента "
+                      f"| user [{user_id}] | input [{college_group}] | mgs [{BotErrors.college_group_not_found}]")
         return
 
     user_model = UserModel(

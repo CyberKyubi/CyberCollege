@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from aiogram import Dispatcher
 from aiogram.types import Message
@@ -15,6 +16,12 @@ from config import load_config
 
 
 async def send_feedback__section(message: Message, state: FSMContext):
+    """
+    Раздел с фидбэком.
+    :param message:
+    :param state:
+    :return:
+    """
     await message.answer(BotMessages.send_feedback__section, reply_markup=reply_markup('send_feedback'))
     await state.set_state(SettingsSectionStates.feedback)
 
@@ -27,11 +34,28 @@ async def back__button(message: Message, state: FSMContext):
     await send_feedback__section(message, state)
 
 
-async def private_message__button(message: Message):
+async def private_message__button(message: Message, redis__db_1: RedisStorage):
+    """
+    Отправляет сервисный тг аккаунт.
+    :param message:
+    :param redis__db_1:
+    :return:
+    """
+    user_id = message.from_user.id
+    college_group, college_building = await get_default_values(user_id, redis__db_1)
     await message.answer(BotMessages.private_message)
+    logging.info(f'User [{message.from_user.id}] college group [{college_group}] college building [{college_building}]'
+                 f'| получил сервисный тг. аккаунт')
 
 
 async def send_message_to_lucifer(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Переводит в раздел, где студент может написать мне сообщение, если студент не throttled.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
     user_id = str(message.from_user.id)
     throttled = await redis__db_1.get_throttle_key(user_id)
     if throttled:
@@ -43,6 +67,14 @@ async def send_message_to_lucifer(message: Message, state: FSMContext, redis__db
 
 
 async def message_to_send__input(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Получает сообщение от студента и отправляет в сервисный аккаунт.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
+    logging.info("Получаю и отправляю сообщение в сервисный аккаунт.")
     user_id = str(message.from_user.id)
     await redis__db_1.set_throttle_key(user_id)
 

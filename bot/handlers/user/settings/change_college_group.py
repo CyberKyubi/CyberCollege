@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Dispatcher
 from aiogram.types import Message
 from aiogram.dispatcher.storage import FSMContext
@@ -14,6 +16,16 @@ from utils.redis_models.user_data import UserModel, GroupInfoModel
 
 
 async def change_college_group__section(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Раздел для смены группы.
+    Если список друзей пустой, то отправляется разметка с добавлением новой группы.
+    Если текущая группа студента равна его собственной, то отправляется разметка по умолчанию с кнопкой,
+    чтобы вернуться в свою группу.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
     user_model = await to_model(message.from_user.id, redis__db_1)
 
     # Проверка 1. Если список групп друзей пустой. #
