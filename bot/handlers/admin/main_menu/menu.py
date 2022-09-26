@@ -1,3 +1,5 @@
+import logging
+
 from aiogram.types import Message
 from aiogram.dispatcher.storage import FSMContext
 
@@ -8,6 +10,13 @@ from utils.jsons.work_with_json import read_json
 
 
 async def admin__main_menu(message: Message, state: FSMContext):
+    """
+    Главное меню админа бота. Если user_id есть в owner.json, то добавляется кнопка для смены роли.
+    :param message:
+    :param state:
+    :return:
+    """
+    logging.info(f"User [{message.from_user.id}] перешел в admin menu")
     reply_markup = main_menu_markup(role='Admin')
     owners = read_json('owners.json')
     if message.from_user.id in owners:

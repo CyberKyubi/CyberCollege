@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from aiogram import Dispatcher
 from aiogram.types import Message
@@ -14,6 +15,17 @@ from config import load_config
 
 
 async def excel_files__input(message: Message, state: FSMContext, session_pool, redis__db_1: RedisStorage, redis__db_2):
+    """
+    Скачивает excel файлы по одному. Если второй файл был скачен, то вызывает функцию из раздела, из которого была
+    вызвана эта функция.
+    :param message:
+    :param state:
+    :param session_pool:
+    :param redis__db_1:
+    :param redis__db_2:
+    :return:
+    """
+    logging.info("Получаю файл...")
     files_data = await redis__db_1.get_data('files')
     key, path = '', ''
     if not files_data.get('file_1'):
@@ -27,6 +39,7 @@ async def excel_files__input(message: Message, state: FSMContext, session_pool, 
     files_data[key] = value
 
     if key == 'file_2':
+        logging.info("Оба файлы были скачаны.")
         await redis__db_1.set_data('files', {'file_1': '', 'file_2': ''})
         await message.answer(BotMessages.received_documents)
 
@@ -40,15 +53,23 @@ async def excel_files__input(message: Message, state: FSMContext, session_pool, 
 
 
 async def get_path(message: Message, destination):
+    """
+    Создает задачу для скачивания файлов.
+    :param message:
+    :param destination: Путь.
+    :return:
+    """
     task = asyncio.create_task(download_file(message, message.document.file_id, destination))
 
     pending = [task]
     while pending:
+        logging.info("Скачивание файла...")
         finished, pending = await asyncio.wait(
             pending,
             return_when=asyncio.ALL_COMPLETED
         )
         result = finished.pop().result()
+        logging.info("Файл был скачан.")
         return result
 
 

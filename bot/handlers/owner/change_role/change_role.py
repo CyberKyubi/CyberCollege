@@ -23,6 +23,7 @@ async def back_to_main_menu__button(message: Message, state: FSMContext, redis__
 
 
 async def change_role_to_user(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    await set_current_role(str(message.from_user.id), Roles.admin, redis__db_1)
     await user__cmd_start(message, state, redis__db_1)
 
 

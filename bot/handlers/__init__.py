@@ -16,7 +16,7 @@ from .user.main_menu.break_timetable import register_break_timetable
 from .user.timetable.timetable_of_classes import register_timetable_of_classes
 from .user.settings.settings import register_setting__section
 from .user.settings.change_college_group import register_change_college_group
-from .user.settings.send_message_to_lucifer import register_send_message_to_lucifer
+from .user.settings.send_feedback import register_send_feedback__section
 
 
 def register_handlers(dp):
@@ -37,5 +37,5 @@ def register_handlers(dp):
     register_timetable_of_classes(dp)
     register_setting__section(dp)
     register_change_college_group(dp)
-    register_send_message_to_lucifer(dp)
+    register_send_feedback__section(dp)
 

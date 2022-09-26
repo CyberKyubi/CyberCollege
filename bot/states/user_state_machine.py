@@ -17,6 +17,7 @@ class UserTimetableSectionStates(StatesGroup):
 
 class SettingsSectionStates(StatesGroup):
     settings = State()
+    feedback = State()
     send_message = State()
 
 
