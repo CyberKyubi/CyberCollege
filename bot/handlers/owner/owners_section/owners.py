@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Dispatcher
 from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.dispatcher.storage import FSMContext
@@ -16,6 +18,14 @@ from config import load_config
 
 
 async def owners__section(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Раздел с owners roles.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
+    logging.info(f"Owner [{message.from_user.id}] перешел в owners__section.")
     owners_data = await redis__db_1.get_data('owners')
 
     msg = BotMessages.owner__section
@@ -42,6 +52,11 @@ async def add_owner__button(message: Message, state: FSMContext):
 
 
 def user_id_str_to_int(user_id__str):
+    """
+    Меняет str type на int
+    :param user_id__str:
+    :return:
+    """
     try:
         user_id__int = int(user_id__str)
     except ValueError:
@@ -51,6 +66,14 @@ def user_id_str_to_int(user_id__str):
 
 
 async def add_owner__insert(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Добавляет нового человека в owner role.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
+    logging.info(f"owner [{message.from_user.id}] | добавляю нового человека в owner role.")
     file = 'owners.json'
 
     ids = read_json(file)
@@ -59,19 +82,29 @@ async def add_owner__insert(message: Message, state: FSMContext, redis__db_1: Re
 
     if isinstance(user_id__int, str):
         await message.answer(BotErrors.user_id_value_error)
+        logging.error(f"Ошибка при добавлении нового человека в owner role "
+                      f"| owner [{message.from_user.id}] | input {[message.text]} "
+                      f"| msg [{BotErrors.user_id_value_error}] ")
         return
 
     if user_id__int == message.from_user.id:
         await message.answer(BotErrors.you_cant_add_yourself)
+        logging.error(f"Ошибка при добавлении нового человека в owner role "
+                      f"| owner [{message.from_user.id}] | input {[message.text]} "
+                      f"| msg [{BotErrors.you_cant_add_yourself}] ")
         return
 
     if user_id__int in ids:
         await message.answer(BotErrors.you_have_already_added_this_user)
+        logging.error(f"Ошибка при добавлении нового человека в owner role "
+                      f"| owner [{message.from_user.id}] | input {[message.text]} "
+                      f"| msg [{BotErrors.you_have_already_added_this_user}] ")
         return
 
     await set_current_role(user_id__str, Roles.user, redis__db_1)
     ids.append(user_id__int)
     write_json(file, ids)
+    logging.info(f"owner [{message.from_user.id}] | добавил [{user_id__str}] в owner role.")
 
     await send_message(message, BotMessages.you_have_been_added_to_owner_role, user_id__int)
     await message.answer(BotMessages.owner_added)
@@ -84,6 +117,14 @@ async def delete_owner__button(message: Message, state: FSMContext):
 
 
 async def delete_owner__insert(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Удаляет человека из owner role.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
+    logging.info(f"owner [{message.from_user.id}] | удаляет человека из owner role.")
     file = 'owners.json'
 
     ids = read_json(file)
@@ -92,18 +133,30 @@ async def delete_owner__insert(message: Message, state: FSMContext, redis__db_1:
 
     if isinstance(user_id__int, str):
         await message.answer(BotErrors.user_id_value_error)
+        logging.error(f"Ошибка при удалении человека из owner role "
+                      f"| owner [{message.from_user.id}] | input {[message.text]} "
+                      f"| msg [{BotErrors.user_id_value_error}] ")
         return
 
     if user_id__int == message.from_user.id:
         await message.answer(BotErrors.you_cant_delete_yourself)
+        logging.error(f"Ошибка при удалении человека из owner role "
+                      f"| owner [{message.from_user.id}] | input {[message.text]} "
+                      f"| msg [{BotErrors.you_cant_delete_yourself}] ")
         return
 
     if user_id__int not in ids:
         await message.answer(BotErrors.this_person_not_found)
+        logging.error(f"Ошибка при удалении человека из owner role "
+                      f"| owner [{message.from_user.id}] | input {[message.text]} "
+                      f"| msg [{BotErrors.this_person_not_found}] ")
         return
 
     if user_id__int == load_config().tgbot.lucifer:
         await message.answer(BotErrors.you_cant_delete_lucifer)
+        logging.error(f"Ошибка при удалении человека из owner role "
+                      f"| owner [{message.from_user.id}] | input {[message.text]} "
+                      f"| msg [{BotErrors.you_cant_delete_lucifer}] ")
         return
 
     owners_data = await redis__db_1.get_data('owners')
@@ -112,6 +165,7 @@ async def delete_owner__insert(message: Message, state: FSMContext, redis__db_1:
 
     ids.remove(user_id__int)
     write_json(file, ids)
+    logging.info(f"owner [{message.from_user.id}] | удалил [{user_id__str}] из owner role.")
 
     await send_message(message, BotMessages.you_have_been_delete_from_owner_role, user_id__int, ReplyKeyboardRemove())
     await message.answer(BotMessages.owner_added)

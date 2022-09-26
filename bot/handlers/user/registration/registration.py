@@ -7,7 +7,7 @@ from aiogram.dispatcher.storage import FSMContext
 from locales.ru import BotErrors
 from states.user_state_machine import RegistrationStates
 from storages.redis.storage import RedisStorage
-from storages.db.requests import select__all_college_groups, insert__new_user
+from storages.db.requests import insert__new_user
 from handlers.user.main_menu.menu import user__main_menu
 from utils.redis_models.user_data import UserModel, GroupInfoModel
 

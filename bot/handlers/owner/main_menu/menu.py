@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Dispatcher
 from aiogram.types import Message
 from aiogram.dispatcher.storage import FSMContext
@@ -13,6 +15,13 @@ from utils.redis_models.owner import Roles
 
 
 async def owner__main_menu(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Главное меню owner role.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
     await set_current_role(str(message.from_user.id), Roles.owner, redis__db_1)
 
     await message.answer(BotMessages.owner__main_menu, reply_markup=reply_markup('owner__main_menu'))

@@ -11,6 +11,14 @@ from utils.redis_models.owner import OwnerModel, Roles
 
 
 async def owner__cmd_start(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Обработка команды /start у owner role.
+    Забирает текущую роль из redis и вызывает соответствующее главное меню роли.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
     owners_data = await redis__db_1.get_data('owners')
     if not owners_data:
         await owner__main_menu(message, state, redis__db_1)

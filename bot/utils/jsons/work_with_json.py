@@ -1,4 +1,5 @@
 import os
+import logging
 
 import orjson as json
 
@@ -8,6 +9,7 @@ def create_path(file: str) -> str:
 
 
 def read_json(file: str) -> list:
+    logging.info(f"Читаю данные из [{file}]")
     path = create_path(file)
     with open(path, 'rb') as json_file:
         json_data = json.loads(json_file.read())
@@ -16,6 +18,7 @@ def read_json(file: str) -> list:
 
 
 def write_json(file: str, value: list):
+    logging.info(f"Записываю данные в [{file}]")
     path = create_path(file)
     with open(path, 'wb') as json_file:
         data = dict(ids=value)

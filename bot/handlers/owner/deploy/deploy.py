@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Dispatcher
 from aiogram.types import Message
 from aiogram.dispatcher.storage import FSMContext
@@ -12,6 +14,12 @@ from utils.timatable.timetable import Timetable
 
 
 async def deploy__section(message: Message, state: FSMContext):
+    """
+    Раздел с deploy'ем бота на хост.
+    :param message:
+    :param state:
+    :return:
+    """
     await message.answer(BotMessages.deploy__section, reply_markup=reply_markup('deploy__section'))
     await state.set_state(DeployStates.deploy)
 
@@ -25,6 +33,13 @@ async def back__button(message: Message, state: FSMContext):
 
 
 async def confirm_your_action__send_buttons(message: Message, state: FSMContext):
+    """
+    Отправляет подтверждение для удаления всех данных из redis и db.
+    :param message:
+    :param state:
+    :return:
+    """
+    logging.info("Отправляю подтверждение для удаления всех данных.")
     await message.answer(
         BotMessages.confirm_your_action.format(action=BotMessages.truncate_storages__action),
         reply_markup=reply_markup('confirm_your_action')
@@ -39,9 +54,20 @@ async def confirm_your_action__input(
         redis__db_1: RedisStorage,
         redis__db_2: RedisStorage
 ):
+    """
+    Обрабатывает кнопки подтверждения.
+    :param message:
+    :param state:
+    :param session_pool:
+    :param redis__db_1:
+    :param redis__db_2:
+    :return:
+    """
     if message.text == BotButtons.yes:
+        logging.info("Ответ: Да")
         await truncate_storages(message, state, session_pool, redis__db_1, redis__db_2)
     elif message.text == BotButtons.no or message.text == BotButtons.back:
+        logging.info("Ответ: Нет")
         await deploy__section(message, state)
 
 
@@ -52,6 +78,16 @@ async def truncate_storages(
         redis__db_1: RedisStorage,
         redis__db_2: RedisStorage
 ):
+    """
+    Очищает все из redis и db.
+    :param message:
+    :param state:
+    :param session_pool:
+    :param redis__db_1:
+    :param redis__db_2:
+    :return:
+    """
+    logging.info("Очищаю все из redis и db.")
     await truncate__tables(session_pool)
 
     await redis__db_1.delete_all_data()
@@ -67,6 +103,16 @@ async def add_groups__section(message: Message, state: FSMContext):
 
 
 async def add_groups(files: dict, message: Message, state: FSMContext, session_pool, redis__db_1: RedisStorage):
+    """
+    Добавляет группы из отправленных файлов расписания.
+    :param files:
+    :param message:
+    :param state:
+    :param session_pool:
+    :param redis__db_1:
+    :return:
+    """
+    logging.info("Записываю группы.")
     paths = list(files.values())
     college_groups__redis, college_groups__db = {}, []
     for path in paths:
@@ -86,6 +132,12 @@ async def add_groups(files: dict, message: Message, state: FSMContext, session_p
 
 
 async def fill_redis(message: Message, redis__db_1: RedisStorage):
+    """
+    Заполняет redis необходимыми ключами.
+    :param message:
+    :param redis__db_1:
+    :return:
+    """
     users = {'users_data': {}, 'users_id': []}
     await redis__db_1.set_data('users', users)
 
