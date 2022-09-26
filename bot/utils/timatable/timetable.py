@@ -9,6 +9,9 @@ import numpy as np
 
 
 class Timetable:
+    """
+    Класс для обработки расписания.
+    """
     def __init__(self, excel_file: str, default_college_building: Optional[str] = None):
         self.excel_file = excel_file
 
@@ -23,6 +26,11 @@ class Timetable:
         return timetable
 
     def prepare_timetable(self, group: str):
+        """
+        Подготавливает расписания для указанной группы.
+        :param group:
+        :return:
+        """
         # Строки плавают от расписания к расписанию. Поэтому нужно индекс строки 'время',
         # чтобы проскипать до этой строки. #
         df_for_get_index = pd.read_excel(self.excel_file, sheet_name=0)
@@ -64,9 +72,19 @@ class Timetable:
 
     @staticmethod
     def get_dates(df) -> list[str]:
+        """
+        Забирает дату из колоны.
+        :param df:
+        :return:
+        """
         return [date for date in df['Date'] if isinstance(date, str)]
 
     def fillna_in_dates(self, df) -> DataFrame:
+        """
+        Заполняет пустые поля датой.
+        :param df:
+        :return:
+        """
         df['Number'] = df['Number'].astype(np.int8)
         indexes = df.index[df['Number'] == 2].to_list()
         all_dates = self.get_dates(df)
@@ -76,6 +94,12 @@ class Timetable:
 
     @staticmethod
     def drop_weekends(df: DataFrame, group: str) -> DataFrame:
+        """
+        Удаляет из расписания 'День самоподготовки', чтобы поле было пустым, тем самым помечается как выходной.
+        :param df:
+        :param group:
+        :return:
+        """
         df[group] = df.apply(
             lambda x: x[group].strip() if isinstance(x[group], str) else x[group], axis=1
         )
@@ -83,6 +107,12 @@ class Timetable:
         return df
 
     def split_info(self, info: str) -> str:
+        """
+        Парсинг строки с информацией о паре.
+        Разбивается на: кабинет, корпус, преподаватель, дисциплина.
+        :param info: Пример: "МДК 11.01 Коннова Г.П. Каб.7 (Туполева,17а)".
+        :return:
+        """
         cabinet = re.search(r'[К-к]аб.\s?\d{1,2}', info)
         if cabinet:
             cabinet = cabinet.group()
@@ -109,6 +139,12 @@ class Timetable:
 
     @staticmethod
     def parse_dataframe(df: DataFrame, weekends: list):
+        """
+        Собирается расписание по дням недели в словарь.
+        :param df:
+        :param weekends:
+        :return:
+        """
         keys = ['number', 'time', 'day_of_week', 'date_str', 'teacher', 'subject', 'cabinet', 'college_building']
         timetable = {
             'Понедельник': {'timetable': [], 'date_str': '', 'status': 'unknown', 'msg': ''},
@@ -132,6 +168,10 @@ class Timetable:
         return timetable
 
     def get_info_about_file(self) -> tuple[dict, dict]:
+        """
+        Забираем из файла расписания информацию: путь к файлу, время расписания.
+        :return:
+        """
         df = pd.read_excel(self.excel_file, sheet_name=0)
         date = pd.read_excel(self.excel_file, sheet_name=0, skiprows=9)
         (date['Unnamed: 0']
@@ -143,6 +183,13 @@ class Timetable:
         return {college_building: {'path': self.excel_file}}, {'start_date': self.dates[0], 'end_date': self.dates[-1]}
 
     def date_parse(self, raw_date: str):
+        """
+        Собирается дата. Из строки даты забирается день и строка месяца.
+        Год - текущий.
+        Месяц - из строки месяца получаем номер месяца.
+        :param raw_date: Пример: "12 Сентября".
+        :return:
+        """
         day = int(re.search(r'\d{1,2}', raw_date).group())
         month_number = {'сен': 9, 'окт': 10, 'нояб': 11, 'дек': 12, 'янв': 1, 'фев': 2, 'мар': 3, 'апр': 4, 'мая': 5,
                         'июн': 6, 'июл': 7}
@@ -153,6 +200,11 @@ class Timetable:
 
     @staticmethod
     def get_college_building(df: DataFrame):
+        """
+        Ищет в расписании корпус и возвращает его.
+        :param df:
+        :return:
+        """
         mask = np.column_stack([df[col].astype(str).str.contains('Расписание занятий на', na=False) for col in df])
         row: DataFrame = df.loc[mask.any(axis=1)]
         row = row.dropna(axis=1)
@@ -161,6 +213,10 @@ class Timetable:
         return college_building
 
     def get_groups(self) -> Tuple[dict, list]:
+        """
+        Собирает все группы из расписания.
+        :return:
+        """
         df_for_get_index = pd.read_excel(self.excel_file, sheet_name=0)
         skiprows = df_for_get_index.index[df_for_get_index['Unnamed: 2'] == 'время'].tolist()[0] + 1
 

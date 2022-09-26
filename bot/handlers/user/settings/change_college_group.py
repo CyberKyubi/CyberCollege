@@ -60,11 +60,26 @@ async def back_to_edit_groups__button(message: Message, state: FSMContext, redis
 
 
 async def add_first_group__button(message: Message, state: FSMContext):
+    """
+    Обрабатывает кнопку для добавления первой группы друга.
+    :param message:
+    :param state:
+    :return:
+    """
+    logging.info(f"User [{message.from_user.id}] | впервые будет добавлять группу друга.")
     await message.answer(BotMessages.new_group__first, reply_markup=back_to_settings())
     await state.set_state(ChangeCollegeGroupStates.new_group__first)
 
 
 async def add_second_group__button(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Обрабатывает кнопку для добавления следующих групп друзей.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
+    logging.info(f"User [{message.from_user.id}] | не впервые добавляет группу друга.")
     user_model = await to_model(message.from_user.id, redis__db_1)
     groups = ', '.join([groups.group for groups in user_model.groups_friends])
     await message.answer(BotMessages.new_group__second.format(groups=groups), reply_markup=back_markup())
@@ -72,6 +87,13 @@ async def add_second_group__button(message: Message, state: FSMContext, redis__d
 
 
 async def new_group__insert(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Получает группу, проверяет ее, если она есть, если уже нет в списке групп, то добавляет в список групп друзей.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
     college_groups_data, users = await redis__db_1.get_multiple_data('college_groups', 'users')
     group = message.text
 
@@ -81,6 +103,9 @@ async def new_group__insert(message: Message, state: FSMContext, redis__db_1: Re
         college_building = 'Курчатова,16'
     else:
         await message.answer(BotErrors.college_group_not_found)
+        logging.error(f"Ошибка при добавлении группы друга "
+                      f"| User [{message.from_user.id}] | input {[message.text]} "
+                      f"| msg [{BotErrors.college_group_not_found}] ")
         return
 
     user_id = str(message.from_user.id)
@@ -89,18 +114,25 @@ async def new_group__insert(message: Message, state: FSMContext, redis__db_1: Re
 
     if group == user_model.default_college_group:
         await message.answer(BotErrors.this_is_your_group)
+        logging.error(f"Ошибка при добавлении группы друга "
+                      f"| User [{message.from_user.id}] | input {[message.text]} "
+                      f"| msg [{BotErrors.this_is_your_group}] ")
         return
 
     if user_model.groups_friends:
         groups = [groups.group for groups in user_model.groups_friends]
         if group in groups:
             await message.answer(BotErrors.you_have_already_added_this_group)
+            logging.error(f"Ошибка при добавлении группы друга "
+                          f"| User [{message.from_user.id}] | input {[message.text]} "
+                          f"| msg [{BotErrors.you_have_already_added_this_group}] ")
             return
 
     user_model.groups_friends.append(GroupInfoModel(college_building=college_building, group=group))
     user_model.group_added = group
     user_data.update(user_model.dict())
     await redis__db_1.set_data('users', users)
+    logging.info(f"User [{message.from_user.id}] | добавил группу [{group}]")
 
     await message.answer(BotMessages.group_added)
     await change_college_group__section(message, state, redis__db_1)
@@ -118,6 +150,16 @@ async def go_to_group(
         own_group=False,
         selected_group=False
 ) -> str:
+    """
+    Переходит в указанную группу: новую, свою, выбранную.
+    :param message:
+    :param redis__db_1:
+    :param new_group: Если новая группа.
+    :param own_group: Если собственная группа.
+    :param selected_group: Если выбранная группа.
+    :return:
+    """
+    logging.info(f"User [{message.from_user.id}] | собирается перейти в другую группу.")
     users = await redis__db_1.get_data('users')
     user_id = str(message.from_user.id)
     user_data = users['users_data'][user_id]
@@ -138,12 +180,20 @@ async def go_to_group(
         user_model.current_group.college_building = user_model.default_college_building
         user_model.current_group.group = user_model.default_college_group
 
+    logging.info(f"User [{message.from_user.id}] | перешел в группу [{user_model.current_group.group}]")
     user_data.update(user_model.dict())
     await redis__db_1.set_data('users', users)
     return user_model.current_group.group
 
 
 async def groups_friends__button(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Отправляет кнопки с группами друзей.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
     user_model = await to_model(message.from_user.id, redis__db_1)
     groups = [groups.group for groups in user_model.groups_friends]
     await message.answer(BotMessages.saved_groups, reply_markup=groups_friends_markup(groups))
@@ -151,6 +201,13 @@ async def groups_friends__button(message: Message, state: FSMContext, redis__db_
 
 
 async def groups_friends__insert(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Обрабатывает группу и переходит в нее.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
     user_model = await to_model(message.from_user.id, redis__db_1)
     groups_friends = [groups.group for groups in user_model.groups_friends]
     group = message.text
@@ -167,6 +224,15 @@ async def groups_friends__insert(message: Message, state: FSMContext, redis__db_
 
 
 async def edit_groups__section(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Отправляет разметку, если кол-во групп не превышает лимиту(6), то кнопки: Добавить, Удалить.
+    Иначе только: Удалить.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
+    logging.info(f'User [{message.from_user.id}] | собирается изменить свои группы друзей.')
     user_model = await to_model(message.from_user.id, redis__db_1)
     keyboard = reply_markup('edit_group')
     if len(user_model.groups_friends) == 6:
@@ -177,6 +243,13 @@ async def edit_groups__section(message: Message, state: FSMContext, redis__db_1:
 
 
 async def delete_groups__button(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Отправляет кнопки с группами друзей.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
     user_model = await to_model(message.from_user.id, redis__db_1)
     groups = [groups.group for groups in user_model.groups_friends]
     await message.answer(BotMessages.delete_groups, reply_markup=groups_friends_markup(groups))
@@ -184,6 +257,14 @@ async def delete_groups__button(message: Message, state: FSMContext, redis__db_1
 
 
 async def delete_groups__insert(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Обрабатывает группу и удаляет ее.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
+    logging.info(f"User [{message.from_user.id}] | собирается удалить группу.")
     users = await redis__db_1.get_data('users')
     user_id = str(message.from_user.id)
     user_data = users['users_data'][user_id]
@@ -193,10 +274,16 @@ async def delete_groups__insert(message: Message, state: FSMContext, redis__db_1
     group = message.text
     if group == user_model.default_college_group:
         await message.answer(BotErrors.delete_own_group)
+        logging.error(f"Ошибка при удалении группы друга "
+                      f"| User [{message.from_user.id}] | input {[message.text]} "
+                      f"| msg [{BotErrors.delete_own_group}] ")
         return
 
     if group not in groups_friends:
         await message.answer(BotErrors.college_group_not_found)
+        logging.error(f"Ошибка при удалении группы друга "
+                      f"| User [{message.from_user.id}] | input {[message.text]} "
+                      f"| msg [{BotErrors.college_group_not_found}] ")
         return
 
     for group_info in user_model.groups_friends:
@@ -207,6 +294,7 @@ async def delete_groups__insert(message: Message, state: FSMContext, redis__db_1
     user_model.current_group.group = user_model.default_college_group
     user_data.update(user_model.dict())
     await redis__db_1.set_data('users', users)
+    logging.info(f"User [{message.from_user.id}] | удалил группу [{group}].")
 
     await message.answer(BotMessages.group_deleted)
     await user__main_menu(message, state, user_model.default_college_group)

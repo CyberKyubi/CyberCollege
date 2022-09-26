@@ -16,6 +16,7 @@ async def admin__main_menu(message: Message, state: FSMContext):
     :param state:
     :return:
     """
+    logging.info(f"Admin {[message.from_user.id]} | перешел в admin__main_menu.")
     reply_markup = main_menu_markup(role='Admin')
     owners = read_json('owners.json')
     if message.from_user.id in owners:

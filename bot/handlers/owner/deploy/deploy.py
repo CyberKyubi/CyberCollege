@@ -39,7 +39,7 @@ async def confirm_your_action__send_buttons(message: Message, state: FSMContext)
     :param state:
     :return:
     """
-    logging.info("Отправляю подтверждение для удаления всех данных.")
+    logging.info(f"Owner [{message.from_user.id}] | Отправляю подтверждение для удаления всех данных.")
     await message.answer(
         BotMessages.confirm_your_action.format(action=BotMessages.truncate_storages__action),
         reply_markup=reply_markup('confirm_your_action')
@@ -64,10 +64,10 @@ async def confirm_your_action__input(
     :return:
     """
     if message.text == BotButtons.yes:
-        logging.info("Ответ: Да")
+        logging.info("Owner [{message.from_user.id}] | Ответ: Да")
         await truncate_storages(message, state, session_pool, redis__db_1, redis__db_2)
     elif message.text == BotButtons.no or message.text == BotButtons.back:
-        logging.info("Ответ: Нет")
+        logging.info("Owner [{message.from_user.id}] | Ответ: Нет")
         await deploy__section(message, state)
 
 
@@ -87,7 +87,7 @@ async def truncate_storages(
     :param redis__db_2:
     :return:
     """
-    logging.info("Очищаю все из redis и db.")
+    logging.info("Owner [{message.from_user.id}] | Очищаю все из redis и db.")
     await truncate__tables(session_pool)
 
     await redis__db_1.delete_all_data()
@@ -112,7 +112,7 @@ async def add_groups(files: dict, message: Message, state: FSMContext, session_p
     :param redis__db_1:
     :return:
     """
-    logging.info("Записываю группы.")
+    logging.info("Owner [{message.from_user.id}] | Записываю группы.")
     paths = list(files.values())
     college_groups__redis, college_groups__db = {}, []
     for path in paths:

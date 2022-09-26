@@ -15,8 +15,16 @@ from utils.redis_models.timetable import TimetableModel, Status
 
 
 async def select_timetable(message: Message, state: FSMContext, redis__db_2: RedisStorage):
-    # Проверяем, если есть в боте уже новое расписание. #
+    """
+    Если есть новое расписание, то отправляет выбор.
+    Если нет, то переходит в раздел расписания.
+    :param message:
+    :param state:
+    :param redis__db_2:
+    :return:
+    """
     if await timetable_is_new(redis__db_2):
+        logging.info(f"User [{message.from_user.id}] | предложен выбор расписания.")
         await message.answer(BotMessages.select_timetable, reply_markup=reply_markup('select_timetable'))
         await state.set_state(UserTimetableSectionStates.select_timetable)
         return
@@ -31,6 +39,7 @@ async def timetable_of_classes__section(message: Message, state: FSMContext):
     :param state:
     :return:
     """
+    logging.info(f"User [{message.from_user.id}] | перешел в раздел расписания.")
     await message.answer(BotMessages.user_timetable__section, reply_markup=reply_markup('user_timetable'))
     await state.set_state(UserTimetableSectionStates.timetable)
 
@@ -45,10 +54,19 @@ async def back_to_timetable__button(message: Message, state: FSMContext):
 
 
 async def select_timetable__input(message: Message, state: FSMContext, redis__db_1: RedisStorage):
+    """
+    Обрабатывает выбор расписания.
+    :param message:
+    :param state:
+    :param redis__db_1:
+    :return:
+    """
     selected_timetable = 'timetable'
     if message.text == BotButtons.old_timetable:
+        logging.info(f"User [{message.from_user.id}] | выбрал старое расписание.")
         await message.answer(BotMessages.selected_old_timetable)
     if message.text == BotButtons.new_timetable:
+        logging.info(f"User [{message.from_user.id}] | выбрал новое расписание.")
         selected_timetable = 'new_timetable'
         await message.answer(BotMessages.selected_new_timetable)
 
@@ -75,6 +93,8 @@ async def timetable_for_today__button(message: Message, redis__db_1: RedisStorag
     key = 'timetable'
     if new_timetable and selected_timetable == 'new_timetable':
         key = 'timetable_for_new_week'
+    logging.info(f"User [{message.from_user.id}] | college group [{college_group}] |"
+                 f" college building [{college_building}] | timetable [{key}] | расписание [Сегодня]")
 
     timetable_data = await redis__db_2.get_data(key)
     timetable_for_group = timetable_data[college_building][college_group]
@@ -117,6 +137,8 @@ async def timetable_for_tomorrow__button(message: Message, redis__db_1: RedisSto
     key = 'timetable'
     if new_timetable and selected_timetable == 'new_timetable':
         key = 'timetable_for_new_week'
+    logging.info(f"User [{message.from_user.id}] | college group [{college_group}] |"
+                 f" college building [{college_building}] | timetable [{key}] | расписание [Завтра]")
 
     timetable_data = await redis__db_2.get_data(key)
     timetable_for_group = timetable_data[college_building][college_group]
@@ -166,6 +188,8 @@ async def timetable_for_week__button(message: Message, redis__db_1: RedisStorage
     key = 'timetable'
     if new_timetable and selected_timetable == 'new_timetable':
         key = 'timetable_for_new_week'
+    logging.info(f"User [{message.from_user.id}] | college group [{college_group}] |"
+                 f" college building [{college_building}] | timetable [{key}] | расписание [Неделя]")
 
     timetable_data = await redis__db_2.get_data(key)
     timetable_for_group = timetable_data[college_building][college_group]
@@ -214,6 +238,8 @@ async def timetable_for_day__input(message: Message, redis__db_1: RedisStorage, 
     key = 'timetable'
     if new_timetable and selected_timetable == 'new_timetable':
         key = 'timetable_for_new_week'
+    logging.info(f"User [{message.from_user.id}] | college group [{college_group}] |"
+                 f" college building [{college_building}] | timetable [{key}] | расписание [По дням недели]")
 
     timetable_data = await redis__db_2.get_data(key)
     timetable_for_group = timetable_data[college_building][college_group]
@@ -265,6 +291,11 @@ def timetable_is_old(start_date_str: str, tomorrow=False, week=False, day=False)
 
 
 async def timetable_is_new(redis__db_2: RedisStorage):
+    """
+    Проверяет есть ли в боте новое расписание.
+    :param redis__db_2:
+    :return:
+    """
     timetable_for_new_week = await redis__db_2.get_data('timetable_for_new_week')
     if timetable_for_new_week:
         return True

@@ -1,3 +1,5 @@
+import logging
+
 from aiogram.types import Message
 from aiogram.dispatcher.storage import FSMContext
 
@@ -15,6 +17,7 @@ async def user__main_menu(message: Message, state: FSMContext, college_group: st
     :param college_group:
     :return:
     """
+    logging.info(f"User [{message.from_user.id}] | перешел в user__main_menu")
     reply_markup = main_menu_markup()
     owners = read_json('owners.json')
     if message.from_user.id in owners:

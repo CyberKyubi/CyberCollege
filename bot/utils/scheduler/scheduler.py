@@ -1,3 +1,5 @@
+import logging
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from storages.redis.storage import RedisStorage
@@ -9,6 +11,12 @@ class DeleteOldTimetable:
 
     @staticmethod
     async def delete_old_timetable(redis__db_2: RedisStorage):
+        """
+        Удаляет старое расписание.
+        :param redis__db_2:
+        :return:
+        """
+        logging.info("Удаляю старое расписание.")
         new_timetable = await redis__db_2.get_data('timetable_for_new_week')
         await redis__db_2.delete_key('timetable_for_new_week')
         if new_timetable:

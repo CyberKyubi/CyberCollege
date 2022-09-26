@@ -34,7 +34,7 @@ async def college_group__input(message: Message, state: FSMContext, session_pool
     else:
         await message.answer(BotErrors.college_group_not_found)
         logging.error("Ошибка при добавлении нового студента "
-                      f"| user [{user_id}] | input [{college_group}] | mgs [{BotErrors.college_group_not_found}]")
+                      f"| User [{user_id}] | input [{college_group}] | mgs [{BotErrors.college_group_not_found}]")
         return
 
     user_model = UserModel(
