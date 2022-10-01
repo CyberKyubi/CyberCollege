@@ -2,7 +2,7 @@ import logging
 from typing import List, Dict, Tuple
 
 from sqlalchemy.dialects.postgresql import insert, array_agg
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.sql.expression import func
 
 from .models import Users, CollegeGroups
@@ -10,7 +10,7 @@ from .models import Users, CollegeGroups
 
 async def insert__new_user(session_pool, user_id: int, college_group: str, college_building: str):
     """
-    Записывает нового студента.
+    Записывает нового студента
     :param session_pool:
     :param user_id:
     :param college_group:
@@ -57,6 +57,23 @@ async def insert__college_groups(session_pool, groups: list):
         )
         await session.commit()
         logging.info("Запрос на внесение групп | Статус [Выполнен]")
+
+
+async def delete_user(session_pool, user_id: int):
+    """
+    Удаляет студента.
+    :param session_pool:
+    :param user_id:
+    :return:
+    """
+    logging.info(f"Запрос на удаление студента [{user_id}] | Статус [Будет выполняться]")
+    async with session_pool() as session:
+        await session.execute(
+            delete(Users)
+            .where(Users.user_id == user_id)
+        )
+        await session.commit()
+    logging.info(f"Запрос на удаление студента [{user_id}] | Статус [Выполнен]")
 
 
 # Not used #

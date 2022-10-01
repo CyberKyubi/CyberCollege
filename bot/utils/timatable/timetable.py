@@ -12,12 +12,14 @@ class Timetable:
     """
     Класс для обработки расписания.
     """
-    def __init__(self, excel_file: str, default_college_building: Optional[str] = None):
+    def __init__(self, excel_file: str, default_college_building: Optional[str] = None, timetable_changes=False):
         self.excel_file = excel_file
 
         self.default_college_building = default_college_building
         self.college_building_1 = 'Курчатова,16'
         self.college_building_2 = 'Туполева,17а'
+
+        self.timetable_changes: bool = timetable_changes
 
         self.dates = []
 
@@ -59,13 +61,15 @@ class Timetable:
         study_days = self.get_dates(study_days_df)
         weekends = [date.split(' ', maxsplit=1) for date in all_dates if date not in study_days]
 
-        study_days_df[['DayOfWeek', 'DateString']] = study_days_df['Date'].str.split(n=1, expand=True)
-        study_days_df.drop('Date', axis=1, inplace=True)
+        # В случае изменений в расписании. Если учебный день изменили на выходной|ые, то df будет пустым. #
+        if not study_days_df.empty:
+            study_days_df[['DayOfWeek', 'DateString']] = (study_days_df['Date'].str.split(n=1, expand=True))
+            study_days_df.drop('Date', axis=1, inplace=True)
 
-        study_days_df[['Teacher', 'Subject', 'Cabinet', 'College building']] = (
-            study_days_df[group].apply(self.split_info).str.split(';', expand=True)
-        )
-        study_days_df.drop(group, axis=1, inplace=True)
+            study_days_df[['Teacher', 'Subject', 'Cabinet', 'College building']] = (
+                study_days_df[group].apply(self.split_info).str.split(';', expand=True)
+            )
+            study_days_df.drop(group, axis=1, inplace=True)
 
         timetable = self.parse_dataframe(study_days_df, weekends)
         return timetable
@@ -137,8 +141,7 @@ class Timetable:
         subject = info.strip()
         return ';'.join([teacher, subject, cabinet, college_building])
 
-    @staticmethod
-    def parse_dataframe(df: DataFrame, weekends: list):
+    def parse_dataframe(self, df: DataFrame, weekends: list):
         """
         Собирается расписание по дням недели в словарь.
         :param df:
@@ -165,6 +168,13 @@ class Timetable:
             msg, status = 'Выходной', 'weekend'
             [timetable[day_of_week].update(date_str=date_str, msg=msg, status=status)
              for day_of_week, date_str in weekends]
+
+        if self.timetable_changes:
+            timetable_changes = {}
+            for key, value in timetable.items():
+                if value['status'] != 'unknown':
+                    timetable_changes.update({key: value})
+            return timetable_changes
         return timetable
 
     def get_info_about_file(self) -> tuple[dict, dict]:
@@ -173,7 +183,9 @@ class Timetable:
         :return:
         """
         df = pd.read_excel(self.excel_file, sheet_name=0)
-        date = pd.read_excel(self.excel_file, sheet_name=0, skiprows=9)
+
+        skiprows = df.index[df['Unnamed: 2'] == 'время'].tolist()[0] + 1
+        date = pd.read_excel(self.excel_file, sheet_name=0, skiprows=skiprows)
         (date['Unnamed: 0']
          .dropna()
          .apply(self.date_parse)
@@ -221,7 +233,9 @@ class Timetable:
         skiprows = df_for_get_index.index[df_for_get_index['Unnamed: 2'] == 'время'].tolist()[0] + 1
 
         df = pd.read_excel(self.excel_file, sheet_name=0, skiprows=skiprows)
-        college_building = self.get_college_building(df_for_get_index)
+        college_building = self.default_college_building
+        if not college_building:
+            college_building = self.get_college_building(df_for_get_index)
         groups = df.columns.tolist()[3:]
 
         redis = {college_building: groups}

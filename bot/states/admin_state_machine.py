@@ -8,3 +8,11 @@ class MainMenuStates(StatesGroup):
 class AdminTimetableSectionStates(StatesGroup):
     timetable = State()
     new_timetable = State()
+
+
+class TimetableChangesStates(StatesGroup):
+    number_of_college_building = State()
+    choose_college_building = State()
+    one_college_building = State()
+    two_college_building = State()
+    timetable_changes = State()

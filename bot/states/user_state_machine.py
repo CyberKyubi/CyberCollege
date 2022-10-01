@@ -19,6 +19,7 @@ class SettingsSectionStates(StatesGroup):
     settings = State()
     feedback = State()
     send_message = State()
+    delete_account = State()
 
 
 class ChangeCollegeGroupStates(StatesGroup):

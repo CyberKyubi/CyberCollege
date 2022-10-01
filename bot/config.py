@@ -24,6 +24,8 @@ class Config:
     storages: Storages
     excel_file_1: str
     excel_file_2: str
+    timetable_changes_1: str
+    timetable_changes_2: str
 
 
 def load_config():
@@ -41,5 +43,7 @@ def load_config():
             postgresql_dsn=config.get('PG_DSN')
         ),
         excel_file_1=config.get('EXCEL_FILE_1'),
-        excel_file_2=config.get('EXCEL_FILE_2')
+        excel_file_2=config.get('EXCEL_FILE_2'),
+        timetable_changes_1=config.get('TIMETABLE_CHANGES_1'),
+        timetable_changes_2=config.get('TIMETABLE_CHANGES_2'),
     )

@@ -118,3 +118,20 @@ class RedisStorage:
                 if data.get(key):
                     data.pop(key)
                     await redis.set(self.user, json.dumps(data))
+
+    async def delete_user(self, user_id: str):
+        """
+        Удаляет студента.
+        :param user_id:
+        :return:
+        """
+        async with self._redis_conn as redis:
+            logging.info(f'Redis instance [{redis}] | user_id [{user_id}] | Удаление студента.')
+            result = await redis.get(self.user)
+            data = json.loads(result)
+            users = data.get('users')
+
+            users['users_data'].pop(user_id)
+            users['users_id'].remove(user_id)
+            data['users'] = users
+            await redis.set(self.user, json.dumps(data))

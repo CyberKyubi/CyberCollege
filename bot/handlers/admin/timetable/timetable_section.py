@@ -17,7 +17,7 @@ async def back_to_main_menu__button(message: Message, state: FSMContext):
     await admin__main_menu(message, state)
 
 
-async def back__button(message: Message, state: FSMContext):
+async def back_to_timetable_section__button(message: Message, state: FSMContext):
     await admin_timetable__section(message, state)
 
 
@@ -34,7 +34,7 @@ def register_admin_timetable__section(dp: Dispatcher):
         state=AdminTimetableSectionStates.timetable
     )
     dp.register_message_handler(
-        back__button,
-        text=BotButtons.back,
+        back_to_timetable_section__button,
+        text=BotButtons.back_to_timetable_section,
         state=AdminTimetableSectionStates.new_timetable
     )

@@ -7,7 +7,7 @@ from aiogram.utils.exceptions import ChatNotFound, BotBlocked, UserDeactivated, 
 
 async def send_message(message: Message, message_to_send: str, user_id: int, reply_markup=None):
     try:
-        await asyncio.sleep(0.4)
+        await asyncio.sleep(0.35)
         message_from_bot = await message.bot.send_message(
             chat_id=user_id, text=message_to_send, reply_markup=reply_markup
         )

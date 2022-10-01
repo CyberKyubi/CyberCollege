@@ -301,7 +301,7 @@ async def delete_groups__insert(message: Message, state: FSMContext, redis__db_1
 
 
 async def secret_question(message: Message):
-    await message.answer('красивое число и заплати мне :)')
+    await message.answer('красивое число :)')
 
 
 def register_change_college_group(dp: Dispatcher):

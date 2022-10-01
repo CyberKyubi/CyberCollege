@@ -7,7 +7,7 @@ from aiogram.types import Message
 from aiogram.dispatcher.storage import FSMContext
 
 from locales.ru import BotMessages, BotButtons, BotErrors
-from keyboards.reply_keyboard_markup import back_markup
+from keyboards.reply_keyboard_markup import back_to_timetable_section
 from states.admin_state_machine import AdminTimetableSectionStates
 from handlers.admin.main_menu.menu import admin__main_menu
 from utils.timatable.timetable import Timetable
@@ -16,7 +16,7 @@ from storages.redis.storage import RedisStorage
 
 
 async def new_timetable__button(message: Message, state: FSMContext):
-    await message.answer(BotMessages.send_new_timetable, reply_markup=back_markup())
+    await message.answer(BotMessages.send_new_timetable, reply_markup=back_to_timetable_section())
     await state.set_state(AdminTimetableSectionStates.new_timetable)
 
 
@@ -77,7 +77,7 @@ async def preparing(files: dict, message: Message, state: FSMContext, redis__db_
         users_id = users['users_id']
 
         dates = list(map(lambda date: date.strftime('%d.%m.%Y'), dates.values()))
-        msg = BotMessages.new_timetable.format(*dates)
+        msg = BotMessages.new_timetable_on.format(*dates)
         await asyncio.gather(
             *[send_message(message, msg, int(user_id)) for user_id in users_id]
         )
@@ -153,19 +153,20 @@ async def prepare_new_timetable(
             return True
 
 
-async def splitting_timetable(college_buildings: dict, college_groups: dict) -> dict:
+async def splitting_timetable(college_buildings: dict, college_groups: dict, timetable_changes=False) -> dict:
     """
     Разбивает расписание по группам и собирает в словарь.
     :param college_groups: словарь с группами.
     :param college_buildings: словарь с информацией о расписании: путь, время расписания.
+    :param timetable_changes:
     :return:
     """
-    logging.info("Разбиваю словарь по группам.")
+    logging.info("Разбиваю расписание по группам и собираю в словарь.")
     [college_buildings[key].update(college_groups=college_groups) for key, college_groups in college_groups.items()]
 
     timetable = {}
     for college_building, values in college_buildings.items():
-        cls = Timetable(excel_file=values['path'], default_college_building=college_building)
+        cls = Timetable(values['path'], college_building, timetable_changes)
         timetable[college_building] = cls.timetable(values['college_groups'])
     return timetable
 

@@ -3,7 +3,7 @@ from aiogram.types import Message
 from aiogram.dispatcher.storage import FSMContext
 
 from locales.ru import BotMessages, BotButtons
-from keyboards.reply_keyboard_markup import reply_markup
+from keyboards.reply_keyboard_markup import setting_markup
 from states.user_state_machine import MainMenuStates, SettingsSectionStates
 from handlers.user.main_menu.menu import user__main_menu
 from handlers.user.get_user_data import get_current_group
@@ -11,7 +11,7 @@ from storages.redis.storage import RedisStorage
 
 
 async def settings__section(message: Message, state: FSMContext):
-    await message.answer(BotMessages.settings__section, reply_markup=reply_markup('settings'))
+    await message.answer(BotMessages.settings__section, reply_markup=setting_markup())
     await state.set_state(SettingsSectionStates.settings)
 
 
