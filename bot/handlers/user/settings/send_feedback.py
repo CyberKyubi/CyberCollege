@@ -11,6 +11,7 @@ from states.user_state_machine import SettingsSectionStates
 from storages.redis.storage import RedisStorage
 from handlers.user.settings.settings import settings__section
 from handlers.user.get_user_data import get_default_values
+from utils.validation.get_mention import get_mention
 from utils.validation.send_message import send_message
 from config import load_config
 
@@ -79,7 +80,8 @@ async def message_to_send__input(message: Message, state: FSMContext, redis__db_
     await settings__section(message, state)
 
     college_group, college_building = await get_default_values(message.from_user.id, redis__db_1)
-    message_from = BotMessages.message_from.format(user_id, college_group, college_building)
+    username = await get_mention(message, user_id)
+    message_from = BotMessages.message_from.format(college_group, college_building, user_id, username)
     doom = load_config().tgbot.doom
     await asyncio.gather(
         send_message(message, message_to_send=message_from, user_id=doom),
