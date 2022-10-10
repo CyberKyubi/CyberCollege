@@ -5,8 +5,8 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.dispatcher.storage import FSMContext
 
 from locales.ru import BotMessages, BotButtons, BotErrors
-from keyboards.reply_keyboard_markup import reply_markup, back_markup
-from states.owner_state_machine import OwnerMainMenuStates, OwnersSectionStates
+from keyboards.reply_keyboard_markup import reply_markup
+from states.owner_state_machine import UsersStates, OwnersSectionStates
 from storages.redis.storage import RedisStorage
 from handlers.owner.main_menu.menu import owner__main_menu
 from handlers.owner.change_role.set_role import set_current_role
@@ -38,16 +38,12 @@ async def owners__section(message: Message, state: FSMContext, redis__db_1: Redi
     await state.set_state(OwnersSectionStates.owners)
 
 
-async def back_to_main_menu__button(message: Message, state: FSMContext, redis__db_1: RedisStorage):
-    await owner__main_menu(message, state, redis__db_1)
-
-
 async def back__button(message: Message, state: FSMContext, redis__db_1: RedisStorage):
     await owners__section(message, state, redis__db_1)
 
 
 async def add_owner__button(message: Message, state: FSMContext):
-    await message.answer(BotMessages.add_owner, reply_markup=back_markup())
+    await message.answer(BotMessages.add_owner, reply_markup=reply_markup('back', back=True))
     await state.set_state(OwnersSectionStates.add_owner)
 
 
@@ -112,7 +108,7 @@ async def add_owner__insert(message: Message, state: FSMContext, redis__db_1: Re
 
 
 async def delete_owner__button(message: Message, state: FSMContext):
-    await message.answer(BotMessages.delete_owner, reply_markup=back_markup())
+    await message.answer(BotMessages.delete_owner, reply_markup=reply_markup('back', back=True))
     await state.set_state(OwnersSectionStates.delete_owner)
 
 
@@ -176,14 +172,9 @@ def register_owners__section(dp: Dispatcher):
     dp.register_message_handler(
         owners__section,
         text=BotButtons.owners,
-        state=OwnerMainMenuStates.main_menu
+        state=UsersStates.users
     )
 
-    dp.register_message_handler(
-        back_to_main_menu__button,
-        text=BotButtons.back_to_main_menu,
-        state=OwnersSectionStates.owners
-    )
     dp.register_message_handler(
         back__button,
         text=BotButtons.back,

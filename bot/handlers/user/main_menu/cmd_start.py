@@ -19,7 +19,7 @@ async def user__cmd_start(message: Message, state: FSMContext, redis__db_1: Redi
     # Зарегистрирован ли студент #
     user_id = str(message.from_user.id)
     if user_id not in users_id:
-        logging.info(f"User [{message.from_user.id}] впервые зашел в бота!")
+        logging.info(f"User | {message.from_user.id} | Переход | [Впервые зашел в бота]")
         await message.answer(BotMessages.registration, reply_markup=ReplyKeyboardRemove())
         await state.set_state(RegistrationStates.college_group__input)
         return

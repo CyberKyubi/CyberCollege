@@ -10,8 +10,9 @@ import numpy as np
 
 class Timetable:
     """
-    Класс для обработки расписания.
+    Класс для чтения файлов с расписанием.
     """
+
     def __init__(self, excel_file: str, default_college_building: Optional[str] = None, timetable_changes=False):
         self.excel_file = excel_file
 
@@ -23,9 +24,153 @@ class Timetable:
 
         self.dates = []
 
+        self.previous_number = 0
+        self.times = ['8.00-9.10', '9.20-10.30', '10.50-12.00', '12.10-13.20', '13.30-14.40', '15.00-16.10',
+                      '16.20-17.30', '17.40-18.50']
+        self.index_of_time = 0
+
     def timetable(self, college_groups: list):
+        """
+        Записывает расписание каждой группы в словарь.
+        :param college_groups:
+        :return:
+        """
         timetable = {group: self.prepare_timetable(group) for group in college_groups}
         return timetable
+
+    def data_integrity_check(self, df: DataFrame):
+        """
+        Проверка целостности данных. Защита от большинства проблем в расписании.
+        :param df:
+        :return:
+        """
+        df.rename(columns={'Unnamed: 0': 'Date', 'Unnamed: 1': 'Number', 'время': 'Time'}, inplace=True)
+        df = df.drop(df.tail(1).index)
+
+        column__date_str = (df['Date']
+                            .dropna()
+                            .apply(self.check_date_str)
+                            )
+        df.update(column__date_str)
+
+        column__number = (df['Number']
+                          .replace(np.nan, 0)
+                          .astype(np.int8)
+                          .apply(self.check_number)
+
+        )
+        column__time = (df['Time']
+                        .replace(np.nan, 0)
+                        .apply(self.check_time)
+                        )
+        cleared_df = pd.merge(column__number, column__time, right_index=True, left_index=True)
+        df.update(cleared_df)
+        df['Number'] = df['Number'].astype(np.int8)
+        return df
+
+    def check_date_str(self, date_str: str) -> str:
+        """
+        Проверяет строку даты. Каждый элемент строки проверяется по отдельности.
+        :param date_str: Пример строки: "Понедельник 10 октября".
+        :return:
+        """
+        string = date_str.strip()
+        elems_string = string.split()
+        if len(elems_string) == 3:
+            day_of_week, day, month = elems_string
+        else:
+            day_of_week, day, month = self.check_day(elems_string)
+
+        day_of_week = self.check_day_of_week(day_of_week.title())
+        month = self.check_month(month.lower())
+        return '%s %s %s' % (day_of_week, day, month)
+
+    @staticmethod
+    def check_day_of_week(day_of_week: str) -> str:
+        """
+        Проверяется день недели. Если дня недели нет в списке, то забирается
+        по аббревиатуре(первые две буквы) день недели.
+        :param day_of_week: Пример дня недели: 'Понедельник'.
+        :return:
+        """
+        week = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота']
+        days_abbr = ['По', 'Вт', 'Ср', 'Че', 'Пя', 'Су']
+        if day_of_week not in week:
+            day_abbr = day_of_week[:2]
+            day_of_week = week[days_abbr.index(day_abbr)]
+        return day_of_week
+
+    @staticmethod
+    def check_day(elems_string: list) -> Tuple[str, str, str]:
+        """
+        Проверяется день. Если кол-во элементов строки 2, то находим день в конце первого элемента,
+        или в начале второго элемента. Если кол-во элементов строки 1, то находим число в строке и разбиваем ее.
+        :param elems_string:
+        :return:
+        """
+        if len(elems_string) == 2:
+            day_of_week, month = elems_string
+            endswith, startswith = day_of_week[-2:], month[:2]
+            if endswith.isdigit():
+                day_of_week = day_of_week.replace(endswith, '')
+                return day_of_week, endswith, month
+            if startswith.isdigit():
+                month = month.replace(startswith, '')
+                return day_of_week, startswith, month
+
+        elif len(elems_string) == 1:
+            day = re.search(r'\d{1,2}', elems_string[0]).group()
+            day_of_week, month = elems_string[0].split(day)
+            return day_of_week, day, month
+
+    @staticmethod
+    def check_month(month: str) -> str:
+        """
+        Проверяется месяц. Находит аббревиатуру месяца и по ней забирается месяц из словаря.
+        :param month:
+        :return:
+        """
+        month_name = {'сен': 'сентября', 'окт': 'октября', 'нояб': 'ноября', 'дек': 'декабря', 'янв': 'января',
+                      'фев': 'февраля', 'мар': 'марта', 'апр': 'апреля', 'мая': 'мая', 'июн': 'июня', 'июл': 'июля'}
+        month_attr = re.search(r'(сен|окт|нояб|дек|янв|фев|мар|апр|мая|июн|июл)', month).group()
+        return month_name[month_attr]
+
+    def check_number(self, number: int):
+        """
+        Проверяет номер пары. Если он пропущен, то записывает предыдущий номер + 1.
+        :param number:
+        :return:
+        """
+        if number == 0 and self.previous_number != 8:
+            self.previous_number += 1
+            return self.previous_number
+        else:
+            self.previous_number = number
+            return number
+
+    def check_time(self, time: str):
+        """
+        Проверяет время пар. Опирается на первые два времени(уж они то должны быть обязательно в файлах).
+        Если временя пропущено, то забирается по индексу время из списка всех времен.
+        :param time:
+        :return:
+        """
+        if time == self.times[0] or self.index_of_time == 8:
+            self.index_of_time = 0
+
+        match time:
+            case 'время':
+                return time
+            case 0:
+                time = self.times[self.index_of_time]
+                if self.index_of_time != 7:
+                    self.index_of_time += 1
+                return time
+            case _:
+                if self.times[self.index_of_time] != time:
+                    time = self.times[self.index_of_time]
+                self.index_of_time += 1
+                return time
 
     def prepare_timetable(self, group: str):
         """
@@ -39,18 +184,17 @@ class Timetable:
         skiprows = df_for_get_index.index[df_for_get_index['Unnamed: 2'] == 'время'].tolist()[0] + 1
 
         df = pd.read_excel(self.excel_file, sheet_name=0, skiprows=skiprows)
+        df = self.data_integrity_check(df)
 
         # Криворукость не знает границ. #
         try:
-            raw_timetable = df[['Unnamed: 0', 'Unnamed: 1', 'время', group]].copy()
+            raw_timetable = df[['Date', 'Number', 'Time', group]].copy()
         except KeyError as error:
             logging.error(error)
             return
-        raw_timetable.rename(columns={'Unnamed: 0': 'Date', 'Unnamed: 1': 'Number', 'время': 'Time'}, inplace=True)
 
         study_days_df = (raw_timetable
-                         .drop(raw_timetable.tail(1).index)
-                         .drop(index=raw_timetable.index[raw_timetable['Time'] == 'время'].to_list())
+                         .drop(index=df.index[df['Time'] == 'время'].to_list())
                          .dropna(how='all')
                          .pipe(self.fillna_in_dates)
                          .pipe(self.drop_weekends, group=group)
@@ -89,7 +233,6 @@ class Timetable:
         :param df:
         :return:
         """
-        df['Number'] = df['Number'].astype(np.int8)
         indexes = df.index[df['Number'] == 2].to_list()
         all_dates = self.get_dates(df)
         for index, date in zip(indexes, all_dates):
@@ -121,7 +264,12 @@ class Timetable:
         if cabinet:
             cabinet = cabinet.group()
         else:
-            cabinet = 'Улица или спортзал'
+            cabinet_without_number = re.search(r'[К-к]аб.\s?', info)
+            if cabinet_without_number:
+                info = info.replace(cabinet_without_number.group(), '')
+                cabinet = 'Каб.666 (Потерян)'
+            else:
+                cabinet = 'Улица или спортзал'
 
         prepared_college_building = re.search(r'(?<=\().*(?=\))', info)
         if prepared_college_building:
@@ -189,7 +337,7 @@ class Timetable:
         (date['Unnamed: 0']
          .dropna()
          .apply(self.date_parse)
-        )
+         )
 
         college_building = self.get_college_building(df)
         return {college_building: {'path': self.excel_file}}, {'start_date': self.dates[0], 'end_date': self.dates[-1]}

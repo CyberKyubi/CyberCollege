@@ -6,7 +6,7 @@ from aiogram.types import Message
 from aiogram.dispatcher.storage import FSMContext
 
 from locales.ru import BotMessages, BotButtons, BotErrors
-from keyboards.reply_keyboard_markup import back_markup, reply_markup
+from keyboards.reply_keyboard_markup import reply_markup
 from states.user_state_machine import SettingsSectionStates
 from storages.redis.storage import RedisStorage
 from handlers.user.settings.settings import settings__section
@@ -17,17 +17,14 @@ from config import load_config
 
 async def send_feedback__section(message: Message, state: FSMContext):
     """
-    Раздел с фидбэком.
+    Раздел с feedback'ом.
     :param message:
     :param state:
     :return:
     """
+    logging.info(f"User | {message.from_user.id} | Переход | раздел [Отправить feedback]")
     await message.answer(BotMessages.send_feedback__section, reply_markup=reply_markup('send_feedback'))
     await state.set_state(SettingsSectionStates.feedback)
-
-
-async def back_to_settings__button(message: Message, state: FSMContext):
-    await settings__section(message, state)
 
 
 async def back__button(message: Message, state: FSMContext):
@@ -44,8 +41,7 @@ async def private_message__button(message: Message, redis__db_1: RedisStorage):
     user_id = message.from_user.id
     college_group, college_building = await get_default_values(user_id, redis__db_1)
     await message.answer(BotMessages.private_message)
-    logging.info(f'User [{message.from_user.id}] college group [{college_group}] college building [{college_building}]'
-                 f'| получил сервисный тг. аккаунт')
+    logging.info(f'User | {message.from_user.id} | Действие | [Получил мой сервисный аккаунт тг.]')
 
 
 async def send_message_to_lucifer(message: Message, state: FSMContext, redis__db_1: RedisStorage):
@@ -56,13 +52,14 @@ async def send_message_to_lucifer(message: Message, state: FSMContext, redis__db
     :param redis__db_1:
     :return:
     """
+    logging.info(f"User | {message.from_user.id} | Переход | раздел [Написать feedback]")
     user_id = str(message.from_user.id)
     throttled = await redis__db_1.get_throttle_key(user_id)
     if throttled:
         await message.answer(BotErrors.throttled)
         return
 
-    await message.answer(BotMessages.send_message_to_lucifer, reply_markup=back_markup())
+    await message.answer(BotMessages.send_message_to_lucifer, reply_markup=reply_markup('back', back=True))
     await state.set_state(SettingsSectionStates.send_message)
 
 
@@ -74,7 +71,7 @@ async def message_to_send__input(message: Message, state: FSMContext, redis__db_
     :param redis__db_1:
     :return:
     """
-    logging.info("Получаю и отправляю сообщение в сервисный аккаунт.")
+    logging.info(f"User | {message.from_user.id} | Действие | [Отправил сообщение]")
     user_id = str(message.from_user.id)
     await redis__db_1.set_throttle_key(user_id)
 
@@ -97,11 +94,6 @@ def register_send_feedback__section(dp: Dispatcher):
         state=SettingsSectionStates.settings
     )
 
-    dp.register_message_handler(
-        back_to_settings__button,
-        text=BotButtons.back_to_settings,
-        state=SettingsSectionStates.feedback
-    )
     dp.register_message_handler(
         back__button,
         text=BotButtons.back,

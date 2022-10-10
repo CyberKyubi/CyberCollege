@@ -5,9 +5,9 @@ from aiogram.types import Message
 from aiogram.utils.exceptions import ChatNotFound, BotBlocked, UserDeactivated, TelegramAPIError, RetryAfter
 
 
-async def get_mention(message: Message,  user_id: int) -> str:
+async def get_mention(message: Message,  user_id: int | str) -> str:
     try:
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.2)
         chat = await message.bot.get_chat(user_id)
         mention = chat.mention
     except ChatNotFound:

@@ -47,6 +47,29 @@ class RedisStorage:
         data = json.loads(result) if result else {}
         return data
 
+    async def set_cached_group(self, key: str, data: dict):
+        """
+        Кэширует данные студентов из выбранной группы.
+        :param key:
+        :param data:
+        :return:
+        """
+        async with self._redis_conn as redis:
+            logging.info(f'Redis instance [{redis}] | key [{key}] | Запись данных.')
+            await redis.setex(key, 600, json.dumps(data))
+
+    async def get_cached_group(self, key):
+        """
+        Забирает кэш выбранной группы.
+        :param key:
+        :return:
+        """
+        redis = self._redis_conn
+        logging.info(f'Redis instance [{redis}] | key [{key}] | Получение данных.')
+        result = await redis.get(key)
+        data = json.loads(result) if result else {}
+        return data
+
     async def set_data(self, key: str, value: Union[dict, list, int, str]):
         """
         Записывает данные по ключу.

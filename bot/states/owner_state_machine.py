@@ -24,3 +24,24 @@ class DeployStates(StatesGroup):
     add_first_user = State()
     fill_redis = State()
     add_first_timetable = State()
+
+
+class UsersStates(StatesGroup):
+    users = State()
+
+
+class StudentsStates(StatesGroup):
+    students = State()
+    students_activity = State()
+
+    choice_college_building = State()
+    select_group = State()
+    list_students = State()
+
+    message_for_deleted_student = State()
+
+    current_student = State()
+    message_for_student = State()
+
+    student_activity = State()
+    all_students_activity = State()

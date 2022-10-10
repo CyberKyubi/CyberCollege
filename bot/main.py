@@ -54,7 +54,7 @@ async def main():
 
     try:
         logging.warning("Bot started!")
-        await dp.start_polling(allowed_updates=["message"])
+        await dp.start_polling(allowed_updates=["message", "callback_query"])
     except Exception as error:
         logging.error(error)
     finally:

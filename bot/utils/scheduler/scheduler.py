@@ -16,11 +16,15 @@ class DeleteOldTimetable:
         :param redis__db_2:
         :return:
         """
-        logging.info("Удаляю старое расписание.")
+        logging.debug(f'BOT | Действие | удаление [Старое расписание]')
         new_timetable = await redis__db_2.get_data('timetable_for_new_week')
         await redis__db_2.delete_key('timetable_for_new_week')
         if new_timetable:
             await redis__db_2.set_data('timetable', new_timetable)
+        else:
+            old_timetable = await redis__db_2.get_data('timetable')
+            if old_timetable:
+                await redis__db_2.delete_key('timetable')
 
     async def start_job(self, redis__db_2):
         self.scheduler.add_job(

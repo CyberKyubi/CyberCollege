@@ -4,11 +4,18 @@ class BotMessages:
     """
     # Создатель #
     # Главное меню и разделы #
-    owner__main_menu = 'Рад тебя снова видеть, Люцик!'
+    owner__main_menu = 'Рад тебя снова видеть, 🧛🏻 Люцик!'
     change_role__section = '^👨🏼‍🎓^  RoLes  ^🧙🏼‍♂^'
     owner__section = '🧛🏻 Owners:\n\n'
     deploy__section = '🛠 Execute functions in order:'
-
+    users__section = "Раздел для просмотра всех 👤 user'ов бота"
+    students__section = '🏫 %s:\n' \
+                        '     📚 Кол-во групп: %s\n' \
+                        '     👨🏼‍🎓 Кол-во студентов: %s\n\n'
+    total_students = '\n📋 Итого:\n' \
+                     '     📚 Групп: %s\n' \
+                     '     👨🏼‍🎓 Студентов: %s'
+    students_activity__section = 'Раздел для просмотра 🚀🌎 общей активности всех студентов'
     # Owners Section #
     owner = '{number}) {mention}\n' \
             '<i><code>{user_id}</code></i>\n'
@@ -30,17 +37,60 @@ class BotMessages:
     storages_cleared = 'Хранилища очищены!'
 
     excel_files = 'Отправь два файла с расписанием по одному:'
-    received_documents = 'Получил документы'
+    received_documents = 'Получил файлы расписания'
     groups = 'Группы:\n'
     received_groups = '{building}\n' \
                       '{groups}\n\n'
     redis_is_ready = 'Redis заполнен'
 
     message_from = 'Сообщение от студента:\n' \
-                   'user_id: {}\n' \
-                   'Группа: {}\n' \
-                   'Корпус: {}'
+                   '👨🏼‍🎓 user_id: {}\n' \
+                   '📚 Группа: {}\n' \
+                   '🏫 Корпус: {}'
 
+    timetable_deleted = 'Расписание удалено'
+
+    # Users Section #
+    choice_college_building = '🏫 Корпус:'
+    click_on_group = 'Кликни по группе:'
+    select_group = '🏫 Корпус: {cb}\n' \
+                   '📋📚 Кол-во групп: {groups}'
+
+    students = '📋👨🏼‍🎓 Список студентов из группы 📚 {group}:\n\n'
+    student = '{number}) username: <b>{username}</b>\n' \
+              'user_id: <code><i>{user_id}</i></code>\n\n'
+    students__end_msg = '\nКликни по <code><i>user_id</i></code>, чтобы скопировать'
+    select_student = 'Напиши <code><i>user_id</i></code> студента:'
+
+    data_is_generated = 'Данные генерируются...'
+    student_info = '👨🏼‍🎓 Студент:\n\n' \
+                   '<b>College</b>\n' \
+                   '📚 Группа: {group}:\n' \
+                   '🏫 Корпус: {cb}\n' \
+                   '🤙📚 Группы друзей:{group_friends}\n\n' \
+                   '<b>Telegram</b>\n' \
+                   'Username: <b>{username}</b>\n' \
+                   'User ID: <code><i>{user_id}</i></code>'
+
+    group_friends__empty = ' Нет'
+    group_friends__not_empty = '    \n\n ▫️ Друг № {number}\n' \
+                               '        📚 Группа: {group}:\n' \
+                               '        🏫 Корпус: {cb}'
+
+    sent_message_for_deleted_student = 'Сообщение, в котором объясни причину удаления:'
+    message_for_deleted_student = 'Ты удален из бота.\n\n' \
+                                  'Сообщение:\n' \
+                                  '{}'
+    student_deleted = 'Студент удален'
+    message_for_student = 'Сообщение для студента:\n' \
+                          'Поддерживаемые типы сообщения: Текст'
+    message_from_owner = 'Личное сообщение от 👨🏽‍💻 разработчика.\n' \
+                         'На него отвечать не нужно.\n\n' \
+                         'Сообщение:'
+    message_for_student__status = 'Статус первого сообщения: {}\n' \
+                                  'Статус второго сообщения: {}\n'
+
+    period_activity = 'Активность за период: '
     # Админ #
     admin__main_menu = 'Рад Вас видеть, администрация!\n' \
                        'Вы находитесь 🏠 Главном меню'
@@ -48,18 +98,19 @@ class BotMessages:
 
     send_new_timetable = 'Отправляйте расписание по одному файлу:'
     splitting_timetable = 'Разбиваю расписание по группам...'
-    found_difference_between_data = 'Нашел разницу между сохраненными группа и группами из расписания:\n' \
-                                    'В сохраненных группах нет: {new}\n' \
-                                    'В расписании нет: {deleted}'
+    found_difference_between_data = 'Нашел разницу между сохраненными группами и группами из расписания:\n\n' \
+                                    'Новые: {new}\n' \
+                                    'Удаленные: {deleted}\n\n\n' \
+                                    'Новые группы будут добавлены'
     timetable_added = 'Новое расписание добавлено!'
 
     timetable_changes_in = 'Изменения в расписании у:'
-    choose_college_building = 'Кликните по кнопке корпуса, у которого изменения в расписании:'
-    choose_first_college_building = 'Чтобы внести изменения у двух корпусов, нужно сначала выбрать первый корпус.\n\n' \
+    admin_choice_college_building = 'Кликните по кнопке корпуса, у которого изменения в расписании:'
+    choice_first_college_building = 'Чтобы внести изменения у двух корпусов, нужно сначала выбрать первый корпус.\n\n' \
                                     'Кликните по кнопке корпуса: '
     send_timetable_changes = 'Отправьте файл c расписанием:'
     send_first_timetable_changes = 'Отправьте первый файл с изменениями:'
-    send_second_timetable_changes = 'Теперь второй файл:'
+    send_second_timetable = 'Теперь второй файл:'
 
     timetable_changes_saved = 'Изменения в расписании сохранены!'
     timetable_changes_not_saved = 'Изменения в расписании не сохранены!\n\n' \
@@ -91,7 +142,7 @@ class BotMessages:
                                     '▫️ Редактирование групп - добавить новую или удалить\n\n' \
                                     'Сейчас ты смотришь расписание у: {group}'
     send_feedback__section = '▫️ По поводу работы бота: баги, предложения. Пиши через бота.\n' \
-                             '▫️ Если что-то иное, нашили в личку'
+                             '▫️ Если что-то иное, напиши лично'
     # Расписание пар #
     select_timetable = 'Выбери расписание, которое хочешь посмотреть: '
     selected_old_timetable = 'Не забудь, что выбрано расписание на текущую неделю!'
@@ -128,7 +179,8 @@ class BotMessages:
     timetable_is_old = 'Внимание! Это расписание не на следующую неделю.'
 
     new_timetable_on = '📖 Новое расписание\n' \
-                       '📅 с {} по {}'
+                       '📅 с {} по {}\n\n' \
+                       'Кликни по кнопке, чтобы перейти на него'
 
     old_timetable = '💀 СТАРОЕ 💀\n\n'
     new_timetable = '🔥 НОВОЕ 🔥\n\n'
@@ -187,12 +239,21 @@ class BotButtons:
     """
     # Общее #
     back = 'Назад'
+    back__markup = [back]
+
     back_to_settings = '⚙ Назад к настройкам'
+    back_to_settings__markup = [back_to_settings]
+
     back_to_main_menu = '🏠 Назад в главное меню'
     back_to_timetable = '📖 Назад к расписанию'
 
     back_to_timetable_section = '📖 Назад в раздел расписания'
-    back_to_choose_college_building = '🏫 Назад к выбору корпуса'
+    back_to_choice_college_building = '🏫 Назад к выбору корпуса'
+
+    back_to_users_section = '👤 Назад в раздел'
+    back_to_students_section = '👨🏼‍🎓 Назад в раздел студентов'
+    back_to_list_students = '📋👨🏼‍🎓 Назад к списку студентов'
+    back_to_student = '👨🏼‍🎓 Назад к студенту'
 
     yes = 'Да'
     no = 'Нет'
@@ -202,9 +263,15 @@ class BotButtons:
     owner_role = '🧛🏻 Owner Role'
 
     change_role = '👨🏼‍🎓🧙🏼‍♂️ Change role'
-    owners = '🧛🏻 Owners'
+    users = '👨🏼‍🎓 Users'
     deploy = '👨🏽‍💻 Deploy'
-    owner_main_menu__markup = [change_role, owners, deploy]
+
+    owner_main_menu__markup = [change_role, users, deploy]
+
+    students = '👨🏼‍🎓 Студенты'
+    owners = '🧛🏻 Owners'
+    admins = '🧙🏼‍♂️ Admins'
+    users__markup = [owners, students, admins, back_to_main_menu]
 
     user_role = '👨🏼‍🎓 User Role'
     admin_role = '🧙🏼‍♂️ Admin Role'
@@ -212,12 +279,36 @@ class BotButtons:
 
     add_owner = '➕🧛🏻 Add owner'
     delete_owner = '➖🧛🏻 Delete owner'
-    owners_section__markup = [add_owner, delete_owner, back_to_main_menu]
+    owners_section__markup = [add_owner, delete_owner, back_to_users_section]
 
     truncate_storages = '🗑 Truncate storages'
     add_groups = '➕📚 Add groups'
     fill_redis = '📝 Fill Redis'
-    deploy_section__markup = [truncate_storages, add_groups, fill_redis, back_to_main_menu]
+    delete_timetable = '🗑📖 Delete timetable'
+    deploy_section__markup = [truncate_storages, add_groups, fill_redis, delete_timetable, back_to_main_menu]
+
+    activity = '🚀 Активность'
+    all_students = '👨🏼‍🎓 Все студенты'
+    students__markup = [activity, all_students, back_to_users_section]
+
+    new_students = '➕👨🏼‍🎓 Новые студенты'
+    all_students_activity = '🚀🌎 Общая активность'
+    students_activity__markup = [new_students, all_students_activity, back_to_students_section]
+
+    college_building_1 = '🏫 Курчатова,16'
+    college_building_2 = '🏫 Туполева,17а'
+    owner_choice_college_building__markup = [college_building_1, college_building_2, back_to_students_section]
+
+    delete_user = '👨🏼‍🎓 Удалить'
+    send_message = '✉️ Отправить сообщение'
+    student_section__markup = [activity, delete_user, send_message, back_to_list_students]
+
+    activity_today = 'Сегодня'
+    activity_week = 'Неделю'
+    activity_month = 'Месяц'
+    activity_all_time = 'Все время'
+    student_activity__markup = [activity_today, activity_week, activity_month, activity_all_time, back_to_student]
+    all_student_activity__markup = [activity_today, activity_week, activity_month, activity_all_time, back]
 
     # Админ #
     admin_timetable = '📖 Расписание'
@@ -232,11 +323,11 @@ class BotButtons:
     two_college_building = '🏫🏫 Двух корпусов'
     timetable_changes__markup = [one_college_building, two_college_building, back_to_timetable_section]
 
-    college_building_1 = '🏫 Курчатова,16'
-    college_building_2 = '🏫 Туполева,17а'
-    choose_college_building__markup = [college_building_1, college_building_2, back_to_timetable_section]
+    admin_choice_college_building__markup = [college_building_1, college_building_2, back_to_timetable_section]
 
     # Юзер (студент) #
+    go_to_new_timetable = '📖 Перейти'
+
     timetable_of_classes = '📖 Расписание пар'
     break_timetable = '🚬 Расписание перемен'
     settings = '⚙️ Настройки'
@@ -283,17 +374,28 @@ class BotButtons:
     monday = 'Понедельник'
     tuesday = 'Вторник'
     wednesday = 'Среда'
+    thursday = 'Четверг'
     friday = 'Пятница'
     saturday = 'Суббота'
-    days_of_week__markup = [monday, tuesday, wednesday, friday, saturday]
+    days_of_week__markup = [monday, tuesday, wednesday, thursday, friday, saturday]
 
     reply_markup = {
         # Создатель #
-        'owner__main_menu': {'markup': owner_main_menu__markup, 'row_width': 2},
+        'owner__main_menu': {'markup': owner_main_menu__markup, 'row_width': 1},
         'change_role': {'markup': change_role__markup, 'row_width': 2},
         'owners__section': {'markup': owners_section__markup, 'row_width': 2},
         'deploy__section': {'markup': deploy_section__markup, 'row_width': 1},
         'confirm_your_action': {'markup': confirm_your_action__markup, 'row_width': 2},
+
+        'users': {'markup': users__markup, 'row_width': 3},
+        'students': {'markup': students__markup, 'row_width': 2},
+        'students_activity': {'markup': students_activity__markup, 'row_width': 2},
+
+
+        'owner_choice_college_building': {'markup': owner_choice_college_building__markup, 'row_width': 2},
+        'student__section': {'markup': student_section__markup, 'row_width': 1},
+        'student_activity': {'markup': student_activity__markup, 'row_width': 2},
+        'all_student_activity': {'markup': all_student_activity__markup, 'row_width': 2},
 
 
         # Админ #
@@ -301,7 +403,7 @@ class BotButtons:
         'admin_timetable': {'markup': admin_timetable__markup, 'row_width': 2},
 
         'timetable_changes': {'markup': timetable_changes__markup, 'row_width': 2},
-        'choose_college_building': {'markup': choose_college_building__markup, 'row_width': 2},
+        'admin_choice_college_building': {'markup': admin_choice_college_building__markup, 'row_width': 2},
 
 
         # Юзер #
@@ -323,6 +425,14 @@ class BotButtons:
         'edit_group__only_delete': {'markup': edit_group__only_delete__markup, 'row_width': 1},
     }
 
+    back_reply_markup = {
+        'back': {'markup': back__markup, 'row_width': 1},
+        'back_to_settings': {'markup': back_to_settings__markup, 'row_width': 1},
+        'back_to_choice_college_building': {'markup': back_to_choice_college_building, 'row_width': 1},
+        'back_to_timetable_section': {'markup': back_to_timetable_section, 'row_width': 1},
+        'back_to_choose_college_building': {'markup': back_to_choice_college_building, 'row_width': 1},
+    }
+
 
 class BotErrors:
     """
@@ -335,6 +445,8 @@ class BotErrors:
     you_have_already_added_this_user = 'Этот человек уже есть!'
     this_person_not_found = 'Этого человека нет!'
     you_cant_delete_lucifer = 'Нельзя удалить Люцифера!'
+    students_from_college_building_not_found = 'Пока нет студентов из этого корпуса :('
+    student_not_found = 'Студент с таким <code><i>{user_id}</i></code> не найден'
 
     # Админ #
     error_in_timetable = 'При чтении расписания произошла ошибка.\nПожалуйста, убедитесь, что в расписании ничего не' \
@@ -345,6 +457,11 @@ class BotErrors:
     timetable_is_already_there = 'Расписание c таким же временем уже есть!'
 
     # Юзер #
+    timetable_not_found_for_group = 'Для группы {} не было расписания в файлах.\n\n' \
+                                    'Причины:\n' \
+                                    '1) Группу забыли записать в расписание\n' \
+                                    '2) Группу могли удалить\n' \
+                                    '3) Группу могли отправить в ад'
     college_group_not_found = 'Группа не найдена..'
 
     day_of_week_is_sunday = '{when} воскресенье :)'
@@ -359,3 +476,55 @@ class BotErrors:
     you_have_already_added_this_group = 'Эта группа уже добавлена'
 
     delete_own_group = 'Себя удалить хочешь?'
+
+
+class BotActivity:
+    """
+    Класс с сообщениями активности юзеров.
+    """
+    activity = '🚀  Активность за 📆 {period}\n\n\n'
+    walking = '🏇 Переходы по боту: %s\n' \
+              '    ▫️ Наиболее частый переход:\n' \
+              '       %s\n' \
+              '    ▫️ Последний переход:\n' \
+              '       %s\n\n'
+    action = '🪄 Действия в боте: %s\n' \
+             '    ▫️️ Наиболее частое действие:\n' \
+             '       %s\n' \
+             '    ▫️ Последнее действие:\n' \
+             '       %s\n\n'
+    timetable = '👀  Просмотр расписания: {amount}\n' \
+                '    ▫️️ Последнее расписание:\n' \
+                '       {last}\n\n'
+    timetable_days = '     Сегодня: {today}\n' \
+                     '     Завтра: {tomorrow}\n' \
+                     '     Вся неделя: {week}\n' \
+                     '     По дням недели: \n' \
+                     '          Понедельник: {monday}\n' \
+                     '          Вторник: {tuesday}\n' \
+                     '          Среда: {wednesday}\n' \
+                     '          Четверг: {thursday}\n' \
+                     '          Пятница: {friday}\n' \
+                     '          Суббота: {saturday}\n'
+
+    walking_detailed = 'Итог: Переходы по боту'
+    action_detailed = 'Итог: Действия в боте:'
+    timetable_detailed = 'Итог: Просмотр расписания:'
+
+    timetable_days_detailed = '    Расписание: {amount}\n' \
+                              '        Сегодня: {today}\n' \
+                              '        Завтра: {tomorrow}\n' \
+                              '        Вся неделя: {week}\n' \
+                              '        По дням недели: {for_days_of_week}\n' \
+                              '            Понедельник: {monday}\n' \
+                              '            Вторник: {tuesday}\n' \
+                              '            Среда: {wednesday}\n' \
+                              '            Четверг: {thursday}\n' \
+                              '            Пятница: {friday}\n' \
+                              '            Суббота: {saturday}\n'
+
+    new_students = '➕👨🏼‍🎓 Новые студенты\nза период:\n\n' \
+                   'Сегодня: {}\n' \
+                   'Неделя: {}\n' \
+                   'Месяц: {}\n\n' \
+                   '🌎 Все время: {}'

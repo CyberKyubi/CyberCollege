@@ -6,7 +6,7 @@ from aiogram.dispatcher.storage import FSMContext
 
 from locales.ru import BotMessages, BotButtons
 from states.owner_state_machine import OwnerMainMenuStates, DeployStates
-from keyboards.reply_keyboard_markup import reply_markup, back_markup
+from keyboards.reply_keyboard_markup import reply_markup
 from storages.redis.storage import RedisStorage
 from storages.db.requests import truncate__tables, insert__college_groups
 from handlers.owner.main_menu.menu import owner__main_menu
@@ -98,7 +98,7 @@ async def truncate_storages(
 
 
 async def add_groups__section(message: Message, state: FSMContext):
-    await message.answer(BotMessages.excel_files, reply_markup=back_markup())
+    await message.answer(BotMessages.excel_files, reply_markup=reply_markup('back', back=True))
     await state.set_state(DeployStates.add_groups)
 
 
@@ -144,6 +144,17 @@ async def fill_redis(message: Message, redis__db_1: RedisStorage):
     await message.answer(BotMessages.redis_is_ready)
 
 
+async def delete_timetable(message: Message, redis__db_2: RedisStorage):
+    """
+    Удаляет расписание.
+    :param message:
+    :param redis__db_2:
+    :return:
+    """
+    await redis__db_2.delete_key('timetable')
+    await message.answer(BotMessages.timetable_deleted)
+
+
 def register_deploy__section(dp: Dispatcher):
     dp.register_message_handler(
         deploy__section,
@@ -180,5 +191,10 @@ def register_deploy__section(dp: Dispatcher):
     dp.register_message_handler(
         fill_redis,
         text=BotButtons.fill_redis,
+        state=DeployStates.deploy
+    )
+    dp.register_message_handler(
+        delete_timetable,
+        text=BotButtons.delete_timetable,
         state=DeployStates.deploy
     )

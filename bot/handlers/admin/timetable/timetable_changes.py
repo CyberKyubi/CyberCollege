@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 import logging
 
 from aiogram import Dispatcher
@@ -7,7 +6,7 @@ from aiogram.types import Message
 from aiogram.dispatcher.storage import FSMContext
 
 from locales.ru import BotMessages, BotButtons, BotErrors
-from keyboards.reply_keyboard_markup import reply_markup, back_to_choose_college_building_markup
+from keyboards.reply_keyboard_markup import reply_markup
 from states.admin_state_machine import AdminTimetableSectionStates, TimetableChangesStates
 from handlers.admin.main_menu.menu import admin__main_menu
 from handlers.user.timetable.timetable_of_classes import generate_weekend, generate_study_day
@@ -30,7 +29,7 @@ async def timetable_changes__section(message: Message, state: FSMContext):
     :param state:
     :return:
     """
-    logging.info(f"Admin [{message.from_user.id}] | перешел в timetable_changes__section")
+    logging.info(f"Admin | {message.from_user.id} | Переход | в раздел [Изменения в расписании]")
     await message.answer(BotMessages.timetable_changes_in, reply_markup=reply_markup('timetable_changes'))
     await state.set_state(TimetableChangesStates.number_of_college_building)
 
@@ -39,16 +38,23 @@ async def back_to_timetable_section(message: Message, state: FSMContext):
     await admin_timetable__section(message, state)
 
 
-async def back_to_choose_college_building__button(message: Message, state: FSMContext, redis__db_2: RedisStorage):
+async def back_to_choice_college_building__button(message: Message, state: FSMContext, redis__db_2: RedisStorage):
+    """
+    Возвращает к выбору корпуса.
+    :param message:
+    :param state:
+    :param redis__db_2:
+    :return:
+    """
     timetable_changes_data = await redis__db_2.get_data('timetable_changes')
     model = TimetableChangesModel(**timetable_changes_data)
 
-    msg = BotMessages.choose_college_building
+    msg = BotMessages.admin_choice_college_building
     if model.number_of_college_building == 2:
-        msg = BotMessages.choose_first_college_building
+        msg = BotMessages.choice_first_college_building
 
-    await message.answer(msg, reply_markup=reply_markup('choose_college_building'))
-    await state.set_state(TimetableChangesStates.choose_college_building)
+    await message.answer(msg, reply_markup=reply_markup('admin_choice_college_building'))
+    await state.set_state(TimetableChangesStates.choice_college_building)
 
 
 async def number_of_college_building__input(message: Message, state: FSMContext, redis__db_2: RedisStorage):
@@ -60,17 +66,18 @@ async def number_of_college_building__input(message: Message, state: FSMContext,
     :return:
     """
     number_of_college_building = 1
-    msg = BotMessages.choose_college_building
+    msg = BotMessages.admin_choice_college_building
     if message.text == BotButtons.two_college_building:
         number_of_college_building = 2
-        msg = BotMessages.choose_first_college_building
+        msg = BotMessages.choice_first_college_building
 
     model = TimetableChangesModel(number_of_college_building=number_of_college_building)
     await redis__db_2.set_data('timetable_changes', model.dict())
-    logging.info(f"Admin [{message.from_user.id}] | изменения в расписании у [{number_of_college_building}] корпуса/ов")
+    logging.info(f"Admin | {message.from_user.id} | Действие | выбрал [Кол-во корпусов, у которых изменения] "
+                 f"-> {number_of_college_building}")
 
     await message.answer(msg, reply_markup=reply_markup('choose_college_building'))
-    await state.set_state(TimetableChangesStates.choose_college_building)
+    await state.set_state(TimetableChangesStates.choice_college_building)
 
 
 async def choose_college_building__input(message: Message, state: FSMContext, redis__db_2: RedisStorage):
@@ -87,7 +94,7 @@ async def choose_college_building__input(message: Message, state: FSMContext, re
     without_emoji = message.text[2:]
     timetable_changes_data['first_college_buildings'] = without_emoji
     await redis__db_2.set_data('timetable_changes', timetable_changes_data)
-    logging.info(f"Admin [{message.from_user.id}] | выбрал корпус [{without_emoji}].")
+    logging.info(f"Admin | {message.from_user.id} | Действие | выбрал [Корпус] -> {without_emoji}")
 
     msg = BotMessages.send_timetable_changes
     next_state = TimetableChangesStates.one_college_building
@@ -95,7 +102,7 @@ async def choose_college_building__input(message: Message, state: FSMContext, re
         next_state = TimetableChangesStates.two_college_building
         msg = BotMessages.send_first_timetable_changes
 
-    await message.answer(msg, reply_markup=back_to_choose_college_building_markup())
+    await message.answer(msg, reply_markup=reply_markup('back_to_choose_college_building', back=True))
     await state.set_state(next_state)
 
 
@@ -108,7 +115,7 @@ async def one_college_building__input(message: Message, state: FSMContext, redis
     :param redis__db_2:
     :return:
     """
-    logging.info(f'Admin [{message.from_user.id}] | отправил файл 1/1.')
+    logging.info(f'Admin | {message.from_user.id} | Действие | отправил [файл 1/1]')
     timetable_changes_data = await redis__db_2.get_data('timetable_changes')
     model = TimetableChangesModel(**timetable_changes_data)
 
@@ -131,16 +138,18 @@ async def two_college_building__input(message: Message, state: FSMContext, redis
     model = TimetableChangesModel(**timetable_changes_data)
 
     if not model.college_buildings_info:
-        logging.info(f'Admin [{message.from_user.id}] | отправил файл 1/2.')
+        logging.info(f'Admin | {message.from_user.id} | Действие | отправил [файл 1/2]')
         path = await get_path(message, load_config().timetable_changes_1)
         model.college_buildings_info.update({model.first_college_buildings: {'path': path}})
         await redis__db_2.set_data('timetable_changes', model.dict())
 
-        await message.answer(BotMessages.send_second_timetable_changes,
-                             reply_markup=back_to_choose_college_building_markup())
+        await message.answer(
+            BotMessages.send_second_timetable,
+            reply_markup=reply_markup('back_to_choose_college_building', back=True)
+        )
         await state.set_state(TimetableChangesStates.two_college_building)
     else:
-        logging.info(f'Admin [{message.from_user.id}] | отправил файл 2/2.')
+        logging.info(f'Admin | {message.from_user.id} | Действие | отправил [файл 2/2]')
         path = await get_path(message, load_config().timetable_changes_2)
         college_building = 'Курчатова,16'
         if model.first_college_buildings == college_building:
@@ -165,6 +174,7 @@ async def timetable_changes(
     :param redis__db_2:
     :return:
     """
+    logging.debug(f'BOT | Действие | начало [Внесение изменений в текущее расписание]')
     college_groups = {}
     for co_bld, value in model.college_buildings_info.items():
         redis, _ = Timetable(value['path'], co_bld).get_groups()
@@ -214,11 +224,13 @@ async def timetable_changes(
 
         if changes:
             await redis__db_2.set_data('timetable', old_tt_dt)
+            logging.debug(f'BOT | Действие | конец [Изменения в расписание внесены]')
             await message.answer(BotMessages.timetable_changes_saved)
             await admin__main_menu(message, state)
 
             await notify_about_timetable_changes(message, redis__db_1, tt_ch_dt, groups)
         else:
+            logging.debug(f'BOT | Действие | конец [Изменения в расписание не сохранены]')
             await message.answer(BotMessages.timetable_changes_not_saved)
             await admin__main_menu(message, state)
 
@@ -238,6 +250,7 @@ async def notify_about_timetable_changes(
     :param groups: Список групп, у которых изменения в расписании.
     :return:
     """
+    logging.debug(f'BOT | Действие | начало [Уведомить об изменениях в расписании]')
     users = await redis__db_1.get_data('users')
     users_data = users['users_data']
 
@@ -259,6 +272,7 @@ async def notify_about_timetable_changes(
                     date_str='Пока пусто', groups=', '.join(groups_friends)
                 )
             )
+    logging.debug(f'BOT | Действие | конец [Студенты получили уведомление об изменениях в расписании]')
 
 
 def generate_timetable_string(
@@ -301,16 +315,16 @@ def register_timetable_changes__section(dp: Dispatcher):
     dp.register_message_handler(
         back_to_timetable_section,
         text=BotButtons.back_to_timetable_section,
-        state=TimetableChangesStates.choose_college_building
+        state=TimetableChangesStates.choice_college_building
     )
     dp.register_message_handler(
-        back_to_choose_college_building__button,
-        text=BotButtons.back_to_choose_college_building,
+        back_to_choice_college_building__button,
+        text=BotButtons.back_to_choice_college_building,
         state=TimetableChangesStates.one_college_building
     )
     dp.register_message_handler(
-        back_to_choose_college_building__button,
-        text=BotButtons.back_to_choose_college_building,
+        back_to_choice_college_building__button,
+        text=BotButtons.back_to_choice_college_building,
         state=TimetableChangesStates.two_college_building
     )
 
@@ -322,7 +336,7 @@ def register_timetable_changes__section(dp: Dispatcher):
     dp.register_message_handler(
         choose_college_building__input,
         text=[BotButtons.college_building_1, BotButtons.college_building_2],
-        state=TimetableChangesStates.choose_college_building
+        state=TimetableChangesStates.choice_college_building
     )
     dp.register_message_handler(
         one_college_building__input,

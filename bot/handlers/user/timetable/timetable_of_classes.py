@@ -9,7 +9,6 @@ from locales.ru import BotMessages, BotButtons, BotErrors
 from keyboards.reply_keyboard_markup import reply_markup, days_of_week_markup
 from states.user_state_machine import MainMenuStates, UserTimetableSectionStates
 from storages.redis.storage import RedisStorage
-from handlers.user.main_menu.menu import user__main_menu
 from handlers.user.get_user_data import get_current_group
 from utils.redis_models.timetable import TimetableModel, Status
 
@@ -24,7 +23,7 @@ async def select_timetable(message: Message, state: FSMContext, redis__db_2: Red
     :return:
     """
     if await timetable_is_new(redis__db_2):
-        logging.info(f"User [{message.from_user.id}] | предложен выбор расписания.")
+        logging.info(f"User | {message.from_user.id} | Расписание пар | Предложен выбор расписания [Старое/Новое]")
         await message.answer(BotMessages.select_timetable, reply_markup=reply_markup('select_timetable'))
         await state.set_state(UserTimetableSectionStates.select_timetable)
         return
@@ -39,14 +38,9 @@ async def timetable_of_classes__section(message: Message, state: FSMContext):
     :param state:
     :return:
     """
-    logging.info(f"User [{message.from_user.id}] | перешел в раздел расписания.")
+    logging.info(f"User | {message.from_user.id} | Переход | раздел [Расписание пар]")
     await message.answer(BotMessages.user_timetable__section, reply_markup=reply_markup('user_timetable'))
     await state.set_state(UserTimetableSectionStates.timetable)
-
-
-async def back_to_main_menu__button(message: Message, state: FSMContext, redis__db_1: RedisStorage):
-    _, college_group = await get_current_group(message.from_user.id, redis__db_1)
-    await user__main_menu(message, state, college_group)
 
 
 async def back_to_timetable__button(message: Message, state: FSMContext):
@@ -63,10 +57,10 @@ async def select_timetable__input(message: Message, state: FSMContext, redis__db
     """
     selected_timetable = 'timetable'
     if message.text == BotButtons.old_timetable:
-        logging.info(f"User [{message.from_user.id}] | выбрал старое расписание.")
+        logging.info(f"User | {message.from_user.id} | Расписание пар | [Выбор расписания] > Ответ [Старое расписание]")
         await message.answer(BotMessages.selected_old_timetable)
     if message.text == BotButtons.new_timetable:
-        logging.info(f"User [{message.from_user.id}] | выбрал новое расписание.")
+        logging.info(f"User | {message.from_user.id} | Расписание пар | [Выбор расписания] > Ответ [Новое расписание]")
         selected_timetable = 'new_timetable'
         await message.answer(BotMessages.selected_new_timetable)
 
@@ -86,6 +80,7 @@ async def timetable_for_today__button(message: Message, redis__db_1: RedisStorag
     :param redis__db_2:
     :return:
     """
+    logging.info(f"User | {message.from_user.id} | Расписание пар | [Сегодня]")
     college_building, college_group, selected_timetable = await get_current_group(
         message.from_user.id, redis__db_1, selected_timetable=True
     )
@@ -93,14 +88,22 @@ async def timetable_for_today__button(message: Message, redis__db_1: RedisStorag
     key = 'timetable'
     if new_timetable and selected_timetable == 'new_timetable':
         key = 'timetable_for_new_week'
-    logging.info(f"User [{message.from_user.id}] | college group [{college_group}] |"
-                 f" college building [{college_building}] | timetable [{key}] | расписание [Сегодня]")
 
+    # Проверка 1. Если есть словарь с расписанием. #
     timetable_data = await redis__db_2.get_data(key)
-    timetable_for_group = timetable_data[college_building][college_group]
+    if not timetable_data:
+        await message.answer(BotErrors.still_no_timetable)
+        return
+
+    # Проверка 2. Если есть расписание для группы. #
+    timetable_for_group = timetable_data[college_building].get(college_group)
+    if not timetable_for_group:
+        await message.answer(BotErrors.timetable_not_found_for_group.format(college_group))
+        return
+
     current_day_of_week = number_to_day_of_week(datetime.datetime.now().weekday())
 
-    # Проверка 1. Если сегодня воскресенье. #
+    # Проверка 3. Если сегодня воскресенье. #
     if current_day_of_week == 'Воскресенье':
         await message.answer(BotErrors.day_of_week_is_sunday.format(when=BotMessages.today__when))
         return
@@ -108,12 +111,12 @@ async def timetable_for_today__button(message: Message, redis__db_1: RedisStorag
     timetable = timetable_for_group[current_day_of_week]
     timetable_model = TimetableModel(**timetable)
 
-    # Проверка 2. Если расписания нет. #
+    # Проверка 4. Если расписания нет. #
     if timetable_model.status == Status.unknown:
         await message.answer(BotErrors.still_no_timetable)
         return
 
-    # Проверка 3. Если сегодня выходной. #
+    # Проверка 5. Если сегодня выходной. #
     if timetable_model.status == Status.weekend:
         await message.answer(BotMessages.weekend__when.format(when=BotMessages.today__when))
         return
@@ -130,6 +133,7 @@ async def timetable_for_tomorrow__button(message: Message, redis__db_1: RedisSto
     :param redis__db_2:
     :return:
     """
+    logging.info(f"User | {message.from_user.id} | Расписание пар | [Завтра]")
     college_building, college_group, selected_timetable = await get_current_group(
         message.from_user.id, redis__db_1, selected_timetable=True
     )
@@ -137,16 +141,23 @@ async def timetable_for_tomorrow__button(message: Message, redis__db_1: RedisSto
     key = 'timetable'
     if new_timetable and selected_timetable == 'new_timetable':
         key = 'timetable_for_new_week'
-    logging.info(f"User [{message.from_user.id}] | college group [{college_group}] |"
-                 f" college building [{college_building}] | timetable [{key}] | расписание [Завтра]")
 
+    # Проверка 1. Если есть словарь с расписанием. #
     timetable_data = await redis__db_2.get_data(key)
-    timetable_for_group = timetable_data[college_building][college_group]
+    if not timetable_data:
+        await message.answer(BotErrors.still_no_timetable)
+        return
+
+    # Проверка 2. Если есть расписание для группы. #
+    timetable_for_group = timetable_data[college_building].get(college_group)
+    if not timetable_for_group:
+        await message.answer(BotErrors.timetable_not_found_for_group.format(college_group))
+        return
 
     current_day_of_week = datetime.datetime.now().weekday()
     day_of_week_for_tomorrow = number_to_day_of_week(current_day_of_week + 1 if current_day_of_week != 6 else 0)
 
-    # Проверка 1. Если завтра воскресенье. #
+    # Проверка 3. Если завтра воскресенье. #
     if day_of_week_for_tomorrow == 'Воскресенье':
         await message.answer(BotErrors.day_of_week_is_sunday.format(when=BotMessages.tomorrow__when))
         return
@@ -154,17 +165,17 @@ async def timetable_for_tomorrow__button(message: Message, redis__db_1: RedisSto
     timetable = timetable_for_group[day_of_week_for_tomorrow]
     timetable_model = TimetableModel(**timetable)
 
-    # Проверка 2. Если нет нового расписания, а имеющиеся устарело. #
+    # Проверка 4. Если нет нового расписания, а имеющиеся устарело. #
     if not selected_timetable and timetable_is_old(timetable_data['dates']['start_date'], tomorrow=True):
         await message.answer(BotErrors.still_no_timetable)
         return
 
-    # Проверка 3. Если расписания нет. #
+    # Проверка 5. Если расписания нет. #
     if timetable_model.status == Status.unknown:
         await message.answer(BotErrors.still_no_timetable)
         return
 
-    # Проверка 4. Если завтра выходной. #
+    # Проверка 6. Если завтра выходной. #
     if timetable_model.status == Status.weekend:
         await message.answer(BotMessages.weekend__when.format(when=BotMessages.tomorrow__when))
         return
@@ -181,6 +192,7 @@ async def timetable_for_week__button(message: Message, redis__db_1: RedisStorage
     :param redis__db_2:
     :return:
     """
+    logging.info(f"User | {message.from_user.id} | Расписание пар | [Вся неделя]")
     college_building, college_group, selected_timetable = await get_current_group(
         message.from_user.id, redis__db_1, selected_timetable=True
     )
@@ -188,11 +200,18 @@ async def timetable_for_week__button(message: Message, redis__db_1: RedisStorage
     key = 'timetable'
     if new_timetable and selected_timetable == 'new_timetable':
         key = 'timetable_for_new_week'
-    logging.info(f"User [{message.from_user.id}] | college group [{college_group}] |"
-                 f" college building [{college_building}] | timetable [{key}] | расписание [Неделя]")
 
+    # Проверка 1. Если есть словарь с расписанием. #
     timetable_data = await redis__db_2.get_data(key)
-    timetable_for_group = timetable_data[college_building][college_group]
+    if not timetable_data:
+        await message.answer(BotErrors.still_no_timetable)
+        return
+
+    # Проверка 2. Если есть расписание для группы. #
+    timetable_for_group = timetable_data[college_building].get(college_group)
+    if not timetable_for_group:
+        await message.answer(BotErrors.timetable_not_found_for_group.format(college_group))
+        return
 
     week = ''
     count = 0
@@ -207,7 +226,7 @@ async def timetable_for_week__button(message: Message, redis__db_1: RedisStorage
 
     await message.answer(BotMessages.college_group.format(college_group) + week)
 
-    # Если расписание устарело, то бот сообщит об этом. #
+    # Проверка 3. Если расписание устарело, то бот сообщит об этом. #
     if not selected_timetable and timetable_is_old(timetable_data['dates']['start_date'], week=True):
         await message.answer(BotMessages.timetable_is_old)
 
@@ -219,6 +238,7 @@ async def timetable_for_days_of_week__section(message: Message, state: FSMContex
     :param state:
     :return:
     """
+    logging.info(f"User | {message.from_user.id} | Переход | раздел [По дням недели]")
     await message.answer(BotMessages.timetable_for_days_of_week, reply_markup=days_of_week_markup())
     await state.set_state(UserTimetableSectionStates.days_of_week)
 
@@ -231,6 +251,7 @@ async def timetable_for_day__input(message: Message, redis__db_1: RedisStorage, 
     :param redis__db_2:
     :return:
     """
+    logging.info(f"User | {message.from_user.id} | Расписание пар | [{message.text}]")
     college_building, college_group, selected_timetable = await get_current_group(
         message.from_user.id, redis__db_1, selected_timetable=True
     )
@@ -238,26 +259,33 @@ async def timetable_for_day__input(message: Message, redis__db_1: RedisStorage, 
     key = 'timetable'
     if new_timetable and selected_timetable == 'new_timetable':
         key = 'timetable_for_new_week'
-    logging.info(f"User [{message.from_user.id}] | college group [{college_group}] |"
-                 f" college building [{college_building}] | timetable [{key}] | расписание [По дням недели]")
 
+    # Проверка 1. Если есть словарь с расписанием. #
     timetable_data = await redis__db_2.get_data(key)
-    timetable_for_group = timetable_data[college_building][college_group]
+    if not timetable_data:
+        await message.answer(BotErrors.still_no_timetable)
+        return
+
+    # Проверка 2. Если есть расписание для группы. #
+    timetable_for_group = timetable_data[college_building].get(college_group)
+    if not timetable_for_group:
+        await message.answer(BotErrors.timetable_not_found_for_group.format(college_group))
+        return
 
     day_of_week = message.text
     timetable = timetable_for_group[day_of_week]
     timetable_model = TimetableModel(**timetable)
 
-    # Если расписание устарело, то бот сообщит об этом. #
+    # Проверка 3. Если расписание устарело, то бот сообщит об этом. #
     if not selected_timetable and timetable_is_old(timetable_data['dates']['start_date'], day=True):
         await message.answer(BotMessages.timetable_is_old)
 
-    # Проверка 1. Если расписания нет. #
+    # Проверка 4. Если расписания нет. #
     if timetable_model.status == Status.unknown:
         await message.answer(BotErrors.still_no_timetable)
         return
 
-    # Проверка 2. Если выходной. #
+    # Проверка 5. Если выходной. #
     if timetable_model.status == Status.weekend:
         await message.answer(BotMessages.weekend)
         return
@@ -353,16 +381,6 @@ def register_timetable_of_classes(dp: Dispatcher):
         state=MainMenuStates.main_menu
     )
 
-    dp.register_message_handler(
-        back_to_main_menu__button,
-        text=BotButtons.back_to_main_menu,
-        state=UserTimetableSectionStates.timetable
-    )
-    dp.register_message_handler(
-        back_to_main_menu__button,
-        text=BotButtons.back_to_main_menu,
-        state=UserTimetableSectionStates.select_timetable
-    )
     dp.register_message_handler(
         back_to_timetable__button,
         text=BotButtons.back_to_timetable,

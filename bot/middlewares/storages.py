@@ -1,7 +1,7 @@
 from typing import Dict, Any
 
 from aiogram import Dispatcher
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.dispatcher.middlewares import BaseMiddleware
 
 from storages.redis.storage import RedisStorage
@@ -20,3 +20,7 @@ class Storages(BaseMiddleware):
         data['redis__db_1'] = self.redis__db_1
         data['redis__db_2'] = self.redis__db_2
         data['dp'] = self.dp
+
+    async def on_process_callback_query(self, query: CallbackQuery, data: Dict[str, Any]):
+        data['redis__db_1'] = self.redis__db_1
+        data['redis__db_2'] = self.redis__db_2

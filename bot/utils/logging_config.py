@@ -4,7 +4,7 @@ config = {
 
     'formatters': {
         'detailed': {
-            'format': '[%(asctime)s | %(levelname)s | %(name)s | %(funcName)s | %(lineno)d | %(message)s ]',
+            'format': '[%(asctime)s | %(levelname)s | %(name)s | %(funcName)s | %(message)s ]',
             'datefmt': '%d-%m-%Y %H:%M:%S'
         },
 
@@ -24,7 +24,7 @@ config = {
         },
 
         'detailed_logs': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'formatter': 'detailed',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': 'logs.log',
@@ -36,7 +36,7 @@ config = {
     'loggers': {
         '': {
             'handlers': ['console_logs', 'detailed_logs'],
-            'level': 'INFO'
+            'level': 'DEBUG'
         }
     },
 }

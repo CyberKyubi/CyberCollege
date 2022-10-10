@@ -25,7 +25,7 @@ async def excel_files__input(message: Message, state: FSMContext, session_pool, 
     :param redis__db_2:
     :return:
     """
-    logging.info("Получаю файл...")
+    logging.debug(f'BOT | Действие | начало [Получаю файлы]')
     files_data = await redis__db_1.get_data('files')
     key, path = '', ''
     if not files_data.get('file_1'):
@@ -39,7 +39,7 @@ async def excel_files__input(message: Message, state: FSMContext, session_pool, 
     files_data[key] = value
 
     if key == 'file_2':
-        logging.info("Оба файлы были скачаны.")
+        logging.debug(f'BOT | Действие | конец [Оба файла скачаны]')
         await redis__db_1.set_data('files', {'file_1': '', 'file_2': ''})
         await message.answer(BotMessages.received_documents)
 
@@ -47,9 +47,10 @@ async def excel_files__input(message: Message, state: FSMContext, session_pool, 
         if current_state in DeployStates:
             await add_groups(files_data, message, state, session_pool, redis__db_1)
         elif current_state in AdminTimetableSectionStates:
-            await preparing(files_data, message, state, redis__db_1, redis__db_2)
+            await preparing(files_data, message, state, session_pool, redis__db_1, redis__db_2)
     else:
         await redis__db_1.set_data('files', files_data)
+        await message.answer(BotMessages.send_second_timetable)
 
 
 async def get_path(message: Message, destination):
@@ -63,13 +64,13 @@ async def get_path(message: Message, destination):
 
     pending = [task]
     while pending:
-        logging.info("Скачивание файла...")
+        logging.debug(f'BOT | Действие | начало [Скачивание файла]')
         finished, pending = await asyncio.wait(
             pending,
             return_when=asyncio.ALL_COMPLETED
         )
         result = finished.pop().result()
-        logging.info("Файл был скачан.")
+        logging.debug(f'BOT | Действие | конец [Файл скачан]')
         return result
 
 

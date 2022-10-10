@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Dispatcher
 from aiogram.types import Message
 from aiogram.dispatcher.storage import FSMContext
@@ -5,16 +7,18 @@ from aiogram.dispatcher.storage import FSMContext
 from locales.ru import BotMessages, BotButtons
 from keyboards.reply_keyboard_markup import reply_markup
 from states.admin_state_machine import MainMenuStates, AdminTimetableSectionStates
-from handlers.admin.main_menu.menu import admin__main_menu
 
 
 async def admin_timetable__section(message: Message, state: FSMContext):
+    """
+    Раздел для работы с расписанием.
+    :param message:
+    :param state:
+    :return:
+    """
+    logging.info(f"Admin | {message.from_user.id} | Переход | в раздел [Расписание]")
     await message.answer(BotMessages.admin_timetable__section, reply_markup=reply_markup('admin_timetable'))
     await state.set_state(AdminTimetableSectionStates.timetable)
-
-
-async def back_to_main_menu__button(message: Message, state: FSMContext):
-    await admin__main_menu(message, state)
 
 
 async def back_to_timetable_section__button(message: Message, state: FSMContext):
@@ -28,11 +32,6 @@ def register_admin_timetable__section(dp: Dispatcher):
         state=MainMenuStates.main_menu
     )
 
-    dp.register_message_handler(
-        back_to_main_menu__button,
-        text=BotButtons.back_to_main_menu,
-        state=AdminTimetableSectionStates.timetable
-    )
     dp.register_message_handler(
         back_to_timetable_section__button,
         text=BotButtons.back_to_timetable_section,

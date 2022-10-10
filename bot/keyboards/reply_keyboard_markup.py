@@ -15,38 +15,11 @@ def main_menu_markup(role: str = 'User', alter_role=False):
     return markup
 
 
-def back_markup():
-    markup = ReplyKeyboardMarkup(row_width=1, resize_keyboard=True, selective=True)
-    markup.add(BotButtons.back)
-    return markup
-
-
-def back_to_timetable_section():
-    markup = ReplyKeyboardMarkup(row_width=1, resize_keyboard=True, selective=True)
-    markup.add(BotButtons.back_to_timetable_section)
-    return markup
-
-
-def back_to_settings():
-    markup = ReplyKeyboardMarkup(row_width=1, resize_keyboard=True, selective=True)
-    markup.add(BotButtons.back_to_settings)
-    return markup
-
-
-def back_to_main_menu():
-    markup = ReplyKeyboardMarkup(row_width=1, resize_keyboard=True, selective=True)
-    markup.add(BotButtons.back_to_main_menu)
-    return markup
-
-
-def back_to_choose_college_building_markup():
-    markup = ReplyKeyboardMarkup(row_width=1, resize_keyboard=True, selective=True)
-    markup.add(BotButtons.back_to_choose_college_building)
-    return markup
-
-
-def reply_markup(key: str) -> ReplyKeyboardMarkup:
-    keyboard = BotButtons.reply_markup[key]
+def reply_markup(key: str, back=False) -> ReplyKeyboardMarkup:
+    if back:
+        keyboard = BotButtons.back_reply_markup[key]
+    else:
+        keyboard = BotButtons.reply_markup[key]
     row_width = keyboard['row_width']
 
     markup = ReplyKeyboardMarkup(row_width=row_width, resize_keyboard=True, selective=True)

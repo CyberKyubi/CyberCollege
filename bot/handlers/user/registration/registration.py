@@ -21,7 +21,7 @@ async def college_group__input(message: Message, state: FSMContext, session_pool
     :param redis__db_1:
     :return:
     """
-    logging.info("Добавляю нового студента.")
+    logging.info(f"User | {message.from_user.id} | Переход | раздел [Регистрация]")
     users, college_groups = await redis__db_1.get_multiple_data('users', 'college_groups')
     users_data = users.get('users_data')
     user_id = str(message.from_user.id)
@@ -34,7 +34,7 @@ async def college_group__input(message: Message, state: FSMContext, session_pool
     else:
         await message.answer(BotErrors.college_group_not_found)
         logging.error("Ошибка при добавлении нового студента "
-                      f"| User [{user_id}] | input [{college_group}] | mgs [{BotErrors.college_group_not_found}]")
+                      f"| User | {user_id} | input [{college_group}] | mgs [{BotErrors.college_group_not_found}]")
         return
 
     user_model = UserModel(
@@ -49,7 +49,7 @@ async def college_group__input(message: Message, state: FSMContext, session_pool
     users['users_id'].append(user_id)
     await redis__db_1.set_data('users', users)
     await insert__new_user(session_pool, message.from_user.id, college_group, college_building)
-    logging.info(f'Новый студент | user_id [{user_id}] college_group [{college_group}] |')
+    logging.info(f"User | {message.from_user.id} | Действие | [Зарегистрирован]")
 
     await user__main_menu(message, state, college_group)
 

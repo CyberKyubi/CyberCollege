@@ -153,3 +153,6 @@ dmypy.json
 /bot/utils/jsons/owners.json
 /bot/utils/jsons/admins.json
 
+# activity
+/bot/excel_file/detailed_student_activity.xlsx
+/bot/excel_file/all_logline.xlsx

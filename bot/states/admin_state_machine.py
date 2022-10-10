@@ -12,7 +12,7 @@ class AdminTimetableSectionStates(StatesGroup):
 
 class TimetableChangesStates(StatesGroup):
     number_of_college_building = State()
-    choose_college_building = State()
+    choice_college_building = State()
     one_college_building = State()
     two_college_building = State()
     timetable_changes = State()
