@@ -125,58 +125,64 @@ async def prepare_new_timetable(
     """
     old_timetable = await redis__db_2.get_data('timetable')
 
-    new_timetable = await splitting_timetable(college_buildings, college_groups)
-    new_start_date, new_end_date = tuple(map(lambda date: date.strftime('%Y.%m.%d'), dates.values()))
-
-    if not old_timetable:
-        logging.debug(f'BOT | Действие | новое расписание [Записываю расписание в redis] -> ключ [timetable]')
-        await insert_new_timetable('timetable', new_timetable, new_start_date, new_end_date, redis__db_2)
-        return True
+    # Это нужно, чтобы ловить опечатки в расписании. Например: "Понедельник 10 отября" #
+    try:
+        new_timetable = await splitting_timetable(college_buildings, college_groups)
+    except Exception as error:
+        logging.error(error)
+        await message.answer(BotErrors.error_in_timetable)
     else:
-        old_start_date, old_end_date = list(map(str_to_date, old_timetable['dates'].values()))
-        # Проверка 1. Если дата нового расписания равна дате расписанию, которое уже есть. #
-        if dates['start_date'] == old_start_date and dates['end_date'] == old_end_date:
-            await message.answer(BotErrors.timetable_is_already_there)
-            logging.debug(f'BOT | Ошибка | новое расписание [Расписание с такой же датой уже есть]')
-            return
+        new_start_date, new_end_date = tuple(map(lambda date: date.strftime('%Y.%m.%d'), dates.values()))
 
-        # Проверка 2.
-        # - Если день недели последнего дня старого расписания меньше четверга,
-        # то новое расписание на вторую половину недели.
-        # - Если больше четверга, то это расписание на следующую неделю.
-        # Четверг - 3
-        day_of_week_old_timetable = old_end_date.weekday()
-        current_day_of_week = datetime.datetime.now().weekday()
-
-        if day_of_week_old_timetable < 3:
-            old_dates = old_timetable.pop('dates')
-            logging.debug(f'BOT | Действие | новое расписание [Обновляю старое расписание]')
-
-            # Думаю, если еще посидеть, подумать, поискать методы, то можно куда лучше обновить словарь с
-            # расписанием, но пока пусть будет так. #
-            for college_building, timetable in new_timetable.items():
-                update_old_timetable = old_timetable[college_building]
-                result = tuple(map(update_old_week, timetable.items(), update_old_timetable.items()))
-                [update_old_timetable.update(timetable_on_group) for timetable_on_group in result]
-
-            old_dates.update(end_date=new_end_date)
-            old_timetable.update(dates=old_dates)
-
-            await redis__db_2.set_data('timetable', old_timetable)
-            return True
-
-        # Если текущий день недели больше четверга, но меньше воскресенья, то новое расписание будет записано в
-        # timetable_for_new_week. Это нужно, чтобы новое расписание не заменяло старое.
-        elif 6 > current_day_of_week > 3:
-            logging.debug(f'BOT | Действие | новое расписание [Записываю расписание в redis] '
-                          f'-> ключ [timetable_for_new_week]')
-            await insert_new_timetable('timetable_for_new_week', new_timetable, new_start_date, new_end_date,
-                                       redis__db_2)
-            return True
-        else:
+        if not old_timetable:
             logging.debug(f'BOT | Действие | новое расписание [Записываю расписание в redis] -> ключ [timetable]')
             await insert_new_timetable('timetable', new_timetable, new_start_date, new_end_date, redis__db_2)
             return True
+        else:
+            old_start_date, old_end_date = list(map(str_to_date, old_timetable['dates'].values()))
+            # Проверка 1. Если дата нового расписания равна дате расписанию, которое уже есть. #
+            if dates['start_date'] == old_start_date and dates['end_date'] == old_end_date:
+                await message.answer(BotErrors.timetable_is_already_there)
+                logging.debug(f'BOT | Ошибка | новое расписание [Расписание с такой же датой уже есть]')
+                return
+
+            # Проверка 2.
+            # - Если день недели последнего дня старого расписания меньше четверга,
+            # то новое расписание на вторую половину недели.
+            # - Если больше четверга, то это расписание на следующую неделю.
+            # Четверг - 3
+            day_of_week_old_timetable = old_end_date.weekday()
+            current_day_of_week = datetime.datetime.now().weekday()
+
+            if day_of_week_old_timetable < 3:
+                old_dates = old_timetable.pop('dates')
+                logging.debug(f'BOT | Действие | новое расписание [Обновляю старое расписание]')
+
+                # Думаю, если еще посидеть, подумать, поискать методы, то можно куда лучше обновить словарь с
+                # расписанием, но пока пусть будет так. #
+                for college_building, timetable in new_timetable.items():
+                    update_old_timetable = old_timetable[college_building]
+                    result = tuple(map(update_old_week, timetable.items(), update_old_timetable.items()))
+                    [update_old_timetable.update(timetable_on_group) for timetable_on_group in result]
+
+                old_dates.update(end_date=new_end_date)
+                old_timetable.update(dates=old_dates)
+
+                await redis__db_2.set_data('timetable', old_timetable)
+                return True
+
+            # Если текущий день недели больше четверга, но меньше воскресенья, то новое расписание будет записано в
+            # timetable_for_new_week. Это нужно, чтобы новое расписание не заменяло старое.
+            elif 6 > current_day_of_week > 3:
+                logging.debug(f'BOT | Действие | новое расписание [Записываю расписание в redis] '
+                              f'-> ключ [timetable_for_new_week]')
+                await insert_new_timetable('timetable_for_new_week', new_timetable, new_start_date, new_end_date,
+                                           redis__db_2)
+                return True
+            else:
+                logging.debug(f'BOT | Действие | новое расписание [Записываю расписание в redis] -> ключ [timetable]')
+                await insert_new_timetable('timetable', new_timetable, new_start_date, new_end_date, redis__db_2)
+                return True
 
 
 async def splitting_timetable(college_buildings: dict, college_groups: dict, timetable_changes=False) -> dict:
