@@ -73,7 +73,7 @@ async def preparing(
         if not_in_excel:
             deleted_groups.extend(not_in_excel)
 
-    if new_groups or deleted_groups:
+    if any(new_groups.values()) or deleted_groups:
         new = sum(list(new_groups.values()), [])
         msg = BotMessages.found_difference_between_data.format(
             new=', '.join(new),
