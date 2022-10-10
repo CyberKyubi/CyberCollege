@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Dispatcher
 from aiogram.types import CallbackQuery
 from aiogram.dispatcher.storage import FSMContext
@@ -23,6 +25,7 @@ async def go_to_new_timetable__button(
     :param redis__db_2:
     :return:
     """
+    logging.info(f"User | {query.from_user.id} | Расписание пар | [Кликнул по кнопке нового расписания в уведомлении]")
     users = await redis__db_1.get_data('users')
     timetable_for_new_week = await redis__db_2.get_data('timetable_for_new_week')
     if timetable_for_new_week:

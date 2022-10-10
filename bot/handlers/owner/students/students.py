@@ -75,9 +75,9 @@ async def show_list_groups(message: Message, state: FSMContext, session_pool, re
         await message.answer(BotErrors.students_from_college_building_not_found)
         return
 
-    students = {group: [str(student_id) for student_id in list_students] for group, list_students in students}
-    groups = list(students.keys())
-    await redis__db_1.set_data('students', students)
+    list_groups = {group: [str(student_id) for student_id in list_students] for group, list_students in students}
+    groups = list(list_groups.keys())
+    await redis__db_1.set_data('list_groups', list_groups)
 
     await message.answer(BotMessages.click_on_group, reply_markup=groups_markup(groups))
     await message.answer(
@@ -95,8 +95,8 @@ async def selected_group(
 ):
     group = callback_data['button']
 
-    students = await redis__db_1.get_data('students')
-    group_model = GroupModel(group=group, list_students=students[group])
+    list_groups = await redis__db_1.get_data('list_groups')
+    group_model = GroupModel(group=group, list_students=list_groups[group])
     await redis__db_1.set_data('group', group_model.dict())
 
     msg_to_send, _ = await check_cached_group(query.message, redis__db_1, group)
@@ -109,8 +109,8 @@ async def check_cached_group(message: Message, redis__db_1: RedisStorage, group:
     if not cached_group or rewrite:
         await message.answer(BotMessages.data_is_generated)
 
-        students, users = await redis__db_1.get_multiple_data('students', 'users')
-        list_students = students[group]
+        list_groups, users = await redis__db_1.get_multiple_data('list_groups', 'users')
+        list_students = list_groups[group]
         users_data = users['users_data']
 
         cached_group_model = await generate_list_students_msg(message, group, list_students, users_data)
@@ -210,25 +210,29 @@ async def delete_student__button(message: Message, state: FSMContext):
 
 
 async def delete_student__input(message: Message, state: FSMContext, session_pool, redis__db_1: RedisStorage, dp):
-    selected_group_data, students = await redis__db_1.get_multiple_data('selected_group', 'students')
-    group, user_id__str = selected_group_data['group'], selected_group_data['student']
-    list_students = students[group]
+    model = await group_to_model(redis__db_1)
+
+    user_id__str = model.selected_user.user_id
     user_id__int = int(user_id__str)
+
+    list_groups = await redis__db_1.get_data('list_groups')
 
     await send_message(message, BotMessages.message_for_deleted_student.format(message.text), user_id__int)
     await delete_student(session_pool, redis__db_1, dp, user_id__int)
     await message.answer(BotMessages.student_deleted)
 
-    groups = list(students.keys())
-    list_students.remove(user_id__str)
-    if list_students:
-        await redis__db_1.set_data('students', students)
-        msg_to_send, _ = await check_cached_group(message, redis__db_1, group, rewrite=True)
+    groups = list(list_groups.keys())
+    model.list_students.remove(user_id__str)
+    if model.list_students:
+        list_groups[model.group].remove(user_id__str)
+        await redis__db_1.set_data('list_groups', list_groups)
+
+        msg_to_send, _ = await check_cached_group(message, redis__db_1, model.group, rewrite=True)
         await send_list_students_msg(message, state, msg_to_send)
     else:
         if len(groups) > 1:
-            students.pop(group)
-            await redis__db_1.set_data('students', students)
+            list_groups.pop(model.group)
+            await redis__db_1.set_data('list_groups', list_groups)
         else:
             await choice_college_building__send_button(message, state)
 
@@ -239,8 +243,8 @@ async def send_message__button(message: Message, state: FSMContext):
 
 
 async def send_message__type_text(message: Message, state: FSMContext, redis__db_1: RedisStorage):
-    selected_group_data = await redis__db_1.get_data('selected_group')
-    group, user_id = selected_group_data['group'], selected_group_data['student']
+    model = await group_to_model(redis__db_1)
+    group, user_id = model.group, model.selected_user.user_id
 
     status = await asyncio.gather(
          send_message(message, BotMessages.message_from_owner, user_id),

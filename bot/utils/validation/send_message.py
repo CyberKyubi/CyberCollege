@@ -5,7 +5,7 @@ from aiogram.types import Message
 from aiogram.utils.exceptions import ChatNotFound, BotBlocked, UserDeactivated, RetryAfter, TelegramAPIError
 
 
-async def send_message(message: Message, message_to_send: str, user_id: int, reply_markup=None) -> str:
+async def send_message(message: Message, message_to_send: str, user_id: int | str, reply_markup=None) -> str:
     try:
         await asyncio.sleep(0.35)
         await message.bot.send_message(chat_id=user_id, text=message_to_send, reply_markup=reply_markup)
