@@ -82,7 +82,7 @@ async def show_list_groups(message: Message, state: FSMContext, session_pool, re
     await message.answer(BotMessages.click_on_group, reply_markup=groups_markup(groups))
     await message.answer(
         BotMessages.select_group.format(cb=college_building, groups=len(groups)),
-        reply_markup=reply_markup('back_to_choice_college_building', back=True)
+        reply_markup=reply_markup('back_to_choose_college_building', back=True)
     )
     await state.set_state(StudentsStates.select_group)
 
@@ -158,7 +158,7 @@ async def generate_list_students_msg(
 async def send_list_students_msg(message: Message, state: FSMContext, msg: str):
     await message.answer(msg)
     await message.answer(
-        BotMessages.select_student, reply_markup=reply_markup('back_to_choice_college_building', back=True)
+        BotMessages.select_student, reply_markup=reply_markup('back_to_choose_college_building', back=True)
     )
     await state.set_state(StudentsStates.list_students)
 

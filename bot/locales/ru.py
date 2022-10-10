@@ -249,6 +249,8 @@ class BotButtons:
 
     back_to_timetable_section = '📖 Назад в раздел расписания'
     back_to_choice_college_building = '🏫 Назад к выбору корпуса'
+    back_to_timetable_section__markup = [back_to_timetable_section]
+    back_to_choose_college_building__markup = [back_to_choice_college_building]
 
     back_to_users_section = '👤 Назад в раздел'
     back_to_students_section = '👨🏼‍🎓 Назад в раздел студентов'
@@ -428,9 +430,8 @@ class BotButtons:
     back_reply_markup = {
         'back': {'markup': back__markup, 'row_width': 1},
         'back_to_settings': {'markup': back_to_settings__markup, 'row_width': 1},
-        'back_to_choice_college_building': {'markup': back_to_choice_college_building, 'row_width': 1},
-        'back_to_timetable_section': {'markup': back_to_timetable_section, 'row_width': 1},
-        'back_to_choose_college_building': {'markup': back_to_choice_college_building, 'row_width': 1},
+        'back_to_timetable_section': {'markup': back_to_timetable_section__markup, 'row_width': 1},
+        'back_to_choose_college_building': {'markup': back_to_choose_college_building__markup, 'row_width': 1},
     }
 
 
