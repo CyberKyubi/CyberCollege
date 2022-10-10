@@ -73,15 +73,19 @@ async def preparing(
         if not_in_excel:
             deleted_groups.extend(not_in_excel)
 
-    if any(new_groups.values()) or deleted_groups:
-        new = sum(list(new_groups.values()), [])
-        msg = BotMessages.found_difference_between_data.format(
-            new=', '.join(new),
-            deleted=', '.join(deleted_groups)
-        )
+    new_to_list = new_groups.values()
+    new_to_str = 'Нет'
+    if any(new_to_list) or deleted_groups:
+        deleted_to_str = ', '.join(deleted_groups) if deleted_groups else 'Нет'
+
+        if any(new_to_list):
+            new = sum(list(new_groups.values()), [])
+            new_to_str = ', '.join(new)
+            await add_new_groups(new_groups, session__pool, redis__db_1)
+
+        msg = BotMessages.found_difference_between_data.format(new=new_to_str, deleted=deleted_to_str)
         await message.answer(msg)
         logging.info(msg)
-        await add_new_groups(new_groups, session__pool, redis__db_1)
 
     logging.debug(f'BOT | Действие | новое расписание [Добавляю расписание]')
     # Добавляет новое расписание. #
@@ -246,14 +250,13 @@ async def add_new_groups(
     :param redis__db_1:
     :return:
     """
-    if groups:
-        logging.debug(f'BOT | Действие | новое расписание [Добавляю новые группы]')
-        college_groups = await redis__db_1.get_data('college_groups')
-        new = [{'college_building': key, 'college_group': g} for key, value in groups.items() if value for g in value]
-        await insert__college_groups(session_pool, new)
+    logging.debug(f'BOT | Действие | новое расписание [Добавляю новые группы]')
+    college_groups = await redis__db_1.get_data('college_groups')
+    new = [{'college_building': key, 'college_group': g} for key, value in groups.items() if value for g in value]
+    await insert__college_groups(session_pool, new)
 
-        [college_groups[key].extend(value) for key, value in groups.items()]
-        await redis__db_1.set_data('college_groups', college_groups)
+    [college_groups[key].extend(value) for key, value in groups.items()]
+    await redis__db_1.set_data('college_groups', college_groups)
 
 
 def register_new_timetable(dp: Dispatcher):

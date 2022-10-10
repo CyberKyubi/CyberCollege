@@ -330,24 +330,30 @@ class Timetable:
         Забираем из файла расписания информацию: путь к файлу, время расписания.
         :return:
         """
-        df = pd.read_excel(self.excel_file, sheet_name=0)
+        raw_df, _ = self.dates_of_timetable()
 
-        skiprows = df.index[df['Unnamed: 2'] == 'время'].tolist()[0] + 1
-        date = pd.read_excel(self.excel_file, sheet_name=0, skiprows=skiprows)
-        (date['Unnamed: 0']
+        college_building = self.get_college_building(raw_df)
+        return {college_building: {'path': self.excel_file}}, {'start_date': self.dates[0], 'end_date': self.dates[-1]}
+
+    def dates_of_timetable(self) -> Tuple[DataFrame, list]:
+        raw_df = pd.read_excel(self.excel_file, sheet_name=0)
+
+        skiprows = raw_df.index[raw_df['Unnamed: 2'] == 'время'].tolist()[0] + 1
+        df = pd.read_excel(self.excel_file, sheet_name=0, skiprows=skiprows)
+
+        df = self.data_integrity_check(df)
+        (df['Date']
          .dropna()
          .apply(self.date_parse)
          )
-
-        college_building = self.get_college_building(df)
-        return {college_building: {'path': self.excel_file}}, {'start_date': self.dates[0], 'end_date': self.dates[-1]}
+        return raw_df, self.dates
 
     def date_parse(self, raw_date: str):
         """
         Собирается дата. Из строки даты забирается день и строка месяца.
         Год - текущий.
         Месяц - из строки месяца получаем номер месяца.
-        :param raw_date: Пример: "12 Сентября".
+        :param raw_date: Пример: "Понедельник 12 сентября".
         :return:
         """
         day = int(re.search(r'\d{1,2}', raw_date).group())

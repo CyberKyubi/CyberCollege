@@ -176,8 +176,10 @@ async def timetable_changes(
     """
     logging.debug(f'BOT | Действие | начало [Внесение изменений в текущее расписание]')
     college_groups = {}
+    path = ''
     for co_bld, value in model.college_buildings_info.items():
-        redis, _ = Timetable(value['path'], co_bld).get_groups()
+        path = value['path']
+        redis, _ = Timetable(path, co_bld).get_groups()
         college_groups.update(redis)
 
     # Сокращения для этой функции
@@ -192,6 +194,8 @@ async def timetable_changes(
     # day_w - day of week
     try:
         new_tt_dt = await splitting_timetable(model.college_buildings_info, college_groups, timetable_changes=True)
+        _, dates = Timetable(path).dates_of_timetable()
+        dates__str = generate_date_str(dates)
     except Exception as error:
         logging.error(error)
         await message.answer(BotErrors.error_in_timetable)
@@ -215,7 +219,7 @@ async def timetable_changes(
                         changes = True
                         tt_string = generate_timetable_string(
                             timetables=((model_new_tt, new_tt, 'new_timetable'), (model_old_tt, old_tt, 'old_timetable')),
-                            day_of_week=day_w, group=gp
+                            day_of_week=day_w, group=gp, dates=dates__str
                         )
 
                         groups.append(gp)
@@ -228,7 +232,7 @@ async def timetable_changes(
             await message.answer(BotMessages.timetable_changes_saved)
             await admin__main_menu(message, state)
 
-            await notify_about_timetable_changes(message, redis__db_1, tt_ch_dt, groups)
+            await notify_about_timetable_changes(message, redis__db_1, tt_ch_dt, groups, dates__str)
         else:
             logging.debug(f'BOT | Действие | конец [Изменения в расписание не сохранены]')
             await message.answer(BotMessages.timetable_changes_not_saved)
@@ -239,7 +243,8 @@ async def notify_about_timetable_changes(
         message: Message,
         redis__db_1: RedisStorage,
         timetable_changes_data: dict,
-        groups: list
+        groups: list,
+        dates: str
 ):
     """
     Отправляет уведомление о новом расписании студентам из группы, у которой изменения, и друзьям у кого эта
@@ -248,6 +253,7 @@ async def notify_about_timetable_changes(
     :param redis__db_1:
     :param timetable_changes_data: Словарь разбитый по группам, в которых лежит строка нового и старого расписания.
     :param groups: Список групп, у которых изменения в расписании.
+    :param dates:
     :return:
     """
     logging.debug(f'BOT | Действие | начало [Уведомить об изменениях в расписании]')
@@ -269,7 +275,7 @@ async def notify_about_timetable_changes(
                 message=message,
                 user_id=user_id,
                 message_to_send=BotMessages.timetable_changes_for_friends.format(
-                    date_str='Пока пусто', groups=', '.join(groups_friends)
+                    date_str=dates, groups=', '.join(groups_friends)
                 )
             )
     logging.debug(f'BOT | Действие | конец [Студенты получили уведомление об изменениях в расписании]')
@@ -279,18 +285,20 @@ def generate_timetable_string(
         timetables: tuple[tuple[TimetableModel, list, str], tuple[TimetableModel, list, str]],
         day_of_week: str,
         group: str,
+        dates: str
 ) -> dict:
     """
     Генерирует строку расписания на день.
     :param timetables: Кортеж из двух расписания: первое - новое, второе - старое.
     :param day_of_week: День недели. Пример "Понедельник".
     :param group: Группа.
+    :param dates:
     :return: Словарь разбитый по группам, в которых лежит строка нового и старого расписания.
     """
     changes = {}
     for model, timetable, key in timetables:
         status = BotMessages.new_timetable if key == 'new_timetable' else BotMessages.old_timetable
-        info = BotMessages.warning_timetable_changes.format(date_str='Пока пусто') if key == 'old_timetable' else ''
+        info = BotMessages.warning_timetable_changes.format(date_str=dates) if key == 'old_timetable' else ''
 
         args = (day_of_week, model.date_str)
         day = generate_study_day(timetable=timetable, *args) if model.status == Status.study_day \
@@ -298,6 +306,18 @@ def generate_timetable_string(
         msg = status + BotMessages.college_group.format(group) + day + info
         changes.update({key: msg})
     return changes
+
+
+def generate_date_str(dates: list) -> str:
+    dates__str = list(map(lambda date: date.strftime('%d.%m.%Y'), dates))
+    match len(dates__str):
+        case 2:
+            text = BotMessages.date_str__from_to.format(dates__str[0], dates__str[-1])
+        case 1:
+            text = BotMessages.date_str__one_day.format(dates__str[0])
+        case _:
+            text = ''
+    return text
 
 
 def register_timetable_changes__section(dp: Dispatcher):
