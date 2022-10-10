@@ -76,7 +76,7 @@ async def number_of_college_building__input(message: Message, state: FSMContext,
     logging.info(f"Admin | {message.from_user.id} | Действие | выбрал [Кол-во корпусов, у которых изменения] "
                  f"-> {number_of_college_building}")
 
-    await message.answer(msg, reply_markup=reply_markup('choose_college_building'))
+    await message.answer(msg, reply_markup=reply_markup('admin_choice_college_building'))
     await state.set_state(TimetableChangesStates.choice_college_building)
 
 
