@@ -19,7 +19,7 @@ from utils.redis_models.timetable_changes import TimetableChangesModel
 from utils.redis_models.timetable import TimetableModel, Status
 from utils.redis_models.user_data import UserModel
 from storages.redis.storage import RedisStorage
-from config_reader import config
+from config_reader import excel_config
 
 
 async def timetable_changes__section(message: Message, state: FSMContext):
@@ -119,7 +119,7 @@ async def one_college_building__input(message: Message, state: FSMContext, redis
     timetable_changes_data = await redis__db_2.get_data('timetable_changes')
     model = TimetableChangesModel(**timetable_changes_data)
 
-    path = await get_path(message, config.timetable_changes_1)
+    path = await get_path(message, excel_config.timetable_changes_1)
     model.college_buildings_info.update({model.first_college_buildings: {'path': path}})
     await timetable_changes(message, state, model, redis__db_1, redis__db_2)
 
@@ -139,7 +139,7 @@ async def two_college_building__input(message: Message, state: FSMContext, redis
 
     if not model.college_buildings_info:
         logging.info(f'Admin | {message.from_user.id} | Действие | отправил [файл 1/2]')
-        path = await get_path(message, config.timetable_changes_1)
+        path = await get_path(message, excel_config.timetable_changes_1)
         model.college_buildings_info.update({model.first_college_buildings: {'path': path}})
         await redis__db_2.set_data('timetable_changes', model.dict())
 
@@ -150,7 +150,7 @@ async def two_college_building__input(message: Message, state: FSMContext, redis
         await state.set_state(TimetableChangesStates.two_college_building)
     else:
         logging.info(f'Admin | {message.from_user.id} | Действие | отправил [файл 2/2]')
-        path = await get_path(message, config.timetable_changes_2)
+        path = await get_path(message, excel_config.timetable_changes_2)
         college_building = 'Курчатова,16'
         if model.first_college_buildings == college_building:
             college_building = 'Туполева,17а'

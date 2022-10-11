@@ -5,10 +5,9 @@ from typing import List, Dict
 
 import pandas as pd
 
-from config_reader import config
+from config_reader import excel_config
 from locales.ru import BotActivity
-# from .enums import PeriodEnum, LogLevelEnum
-from utils.activity.enums import PeriodEnum, RoleEnum, StatementEnum
+from utils.activity.enums import PeriodEnum, RoleEnum, StatementEnum, LogLevelEnum
 from utils.redis_models.logs import LogLineModel, PointModel, SimpleStudentActivityModel, \
     DetailedStudentActivityModel, TimetableCounterModel
 
@@ -131,7 +130,7 @@ def read_logs(role: str, level: int, period: str, statement, user_id: str = None
     simple, timetable_days = generate_msg_simple_activity(simple_student_activity, timetable_counter, period)
     generate_msg_detailed_activity(simple_student_activity, detailed_student_activity, timetable_days)
     if all_logline.empty:
-        all_logline.to_excel(config.all_logline)
+        all_logline.to_excel(excel_config.all_logline)
     return simple
 
 
@@ -262,7 +261,7 @@ def generate_msg_detailed_activity(
         data['Пункт'].extend(points), data['Сообщения'].extend(messages), data['Кол-во'].extend(amount)
 
     df = pd.DataFrame(data)
-    df.to_excel(config.student_activity)
+    df.to_excel(excel_config.student_activity)
 
 
 def get_most_common(counter: dict):
@@ -282,9 +281,9 @@ def get_last(msg: str):
     return 'Нет'
 
 
-# ser_id = '5496359107'
-#read_logs(role=RoleEnum.user, user_id=user_id, level=LogLevelEnum.INFO, period=PeriodEnum.week,
-#          statement=StatementEnum.all_student)
+read_logs(role=RoleEnum.user, user_id='5496359107', level=LogLevelEnum.INFO, period=PeriodEnum.week,
+          statement=StatementEnum.all_students)
 # new_students()
+
 
 

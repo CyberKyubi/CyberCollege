@@ -17,22 +17,22 @@ from storages.redis.base import RedisPool
 from storages.redis.storage import RedisStorage
 from utils.logging_config import config as log_conf
 from utils.scheduler.scheduler import DeleteOldTimetable
-from config_reader import config
+from config_reader import app_config
 
 
 async def main():
     logging.getLogger(__name__)
     dictConfig(log_conf)
 
-    engine = create_async_engine(config.postgresql_dsn, future=True, echo=False)
+    engine = create_async_engine(app_config.postgresql_dsn, future=True, echo=False)
     session_pool = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
     # Создаю два пула с разным номеров бд:
     # <> Первый - сервисный, для быстрой работы бота. В нем хранятся данные таблицы users(user_id, college_group)
     # и таблицы college_groups(college_group, college_building).
     # <> Второй для всех остальных нужд.
-    redis_pool__db_1 = RedisPool(config.redis__db_1)
-    redis_pool__db_2 = RedisPool(config.redis__db_2)
+    redis_pool__db_1 = RedisPool(app_config.redis__db_1)
+    redis_pool__db_2 = RedisPool(app_config.redis__db_2)
     redis_pool_connect__db_1 = await redis_pool__db_1.connect()
     redis_pool_connect__db_2 = await redis_pool__db_2.connect()
     redis_storage__db_1 = RedisStorage(redis_pool_connect__db_1)
@@ -43,7 +43,7 @@ async def main():
     await scheduler_obj.start_job(redis_storage__db_2)
     scheduler.start()
 
-    bot = Bot(config.token, parse_mode=ParseMode.HTML)
+    bot = Bot(app_config.token, parse_mode=ParseMode.HTML)
     dp = Dispatcher(bot, storage=RedisStorage2())
 
     setup_middlewares(dp, session_pool, redis_storage__db_1, redis_storage__db_2)

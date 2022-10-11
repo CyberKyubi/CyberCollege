@@ -2,7 +2,7 @@ from aiogram import Dispatcher
 from aiogram.types import Message, InputFile
 from aiogram.dispatcher.storage import FSMContext
 
-from config_reader import config
+from config_reader import excel_config
 from locales.ru import BotMessages, BotButtons, BotActivity
 from keyboards.reply_keyboard_markup import reply_markup
 from states.owner_state_machine import StudentsStates
@@ -42,7 +42,7 @@ async def all_students_activity__output(message: Message):
     )
 
     await message.answer(simple)
-    await message.answer_document(InputFile(config.student_activity), caption='Детально')
+    await message.answer_document(InputFile(excel_config.student_activity), caption='Детально')
 
 
 def register_students_activity__section(dp: Dispatcher):
