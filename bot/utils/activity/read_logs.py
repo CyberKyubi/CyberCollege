@@ -281,9 +281,3 @@ def get_last(msg: str):
     return 'Нет'
 
 
-read_logs(role=RoleEnum.user, user_id='5496359107', level=LogLevelEnum.INFO, period=PeriodEnum.week,
-          statement=StatementEnum.all_students)
-# new_students()
-
-
-
