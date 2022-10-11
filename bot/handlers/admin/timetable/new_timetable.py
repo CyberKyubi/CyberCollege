@@ -17,13 +17,14 @@ from storages.redis.storage import RedisStorage
 from storages.db.requests import insert__college_groups
 
 
-async def new_timetable__button(message: Message, state: FSMContext):
+async def new_timetable__button(message: Message, state: FSMContext, redis__db_1: RedisStorage):
     logging.info(f"Admin | {message.from_user.id} | Переход | в раздел [Новое расписание]")
     await message.answer(
         BotMessages.send_new_timetable,
         reply_markup=reply_markup('back_to_timetable_section', back=True)
     )
     await state.set_state(AdminTimetableSectionStates.new_timetable)
+    await redis__db_1.delete_key('files')
 
 
 async def preparing(
