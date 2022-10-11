@@ -1,12 +1,11 @@
 import asyncio
-import logging
 from typing import Dict, Tuple
 
 from aiogram import Dispatcher
 from aiogram.types import Message, CallbackQuery, InputFile
 from aiogram.dispatcher.storage import FSMContext
 
-from config import load_config
+from config_reader import config
 from locales.ru import BotMessages, BotButtons, BotErrors
 from keyboards.reply_keyboard_markup import reply_markup
 from keyboards.inline_keyboard_markup import groups_markup, groups_cd
@@ -200,8 +199,8 @@ async def student_activity__output(message: Message, redis__db_1: RedisStorage):
     )
 
     await message.answer(simple)
-    await message.answer_document(InputFile(load_config().user_activity.student), caption='Детально')
-    await message.answer_document(InputFile(load_config().user_activity.all_logline), caption='Все логи')
+    await message.answer_document(InputFile(config.student_activity), caption='Детально')
+    await message.answer_document(InputFile(config.all_logline), caption='Все логи')
 
 
 async def delete_student__button(message: Message, state: FSMContext):

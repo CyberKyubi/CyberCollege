@@ -5,7 +5,7 @@ from typing import List, Dict
 
 import pandas as pd
 
-from config import load_config
+from config_reader import config
 from locales.ru import BotActivity
 # from .enums import PeriodEnum, LogLevelEnum
 from utils.activity.enums import PeriodEnum, RoleEnum, StatementEnum
@@ -131,7 +131,7 @@ def read_logs(role: str, level: int, period: str, statement, user_id: str = None
     simple, timetable_days = generate_msg_simple_activity(simple_student_activity, timetable_counter, period)
     generate_msg_detailed_activity(simple_student_activity, detailed_student_activity, timetable_days)
     if all_logline.empty:
-        all_logline.to_excel(load_config().user_activity.all_logline)
+        all_logline.to_excel(config.all_logline)
     return simple
 
 
@@ -262,7 +262,7 @@ def generate_msg_detailed_activity(
         data['Пункт'].extend(points), data['Сообщения'].extend(messages), data['Кол-во'].extend(amount)
 
     df = pd.DataFrame(data)
-    df.to_excel(load_config().user_activity.student)
+    df.to_excel(config.student_activity)
 
 
 def get_most_common(counter: dict):

@@ -14,7 +14,7 @@ from utils.validation.send_message import send_message
 from utils.validation.get_mention import get_mention
 from utils.jsons.work_with_json import read_json, write_json
 from utils.redis_models.owner import Roles
-from config import load_config
+from config_reader import config
 
 
 async def owners__section(message: Message, state: FSMContext, redis__db_1: RedisStorage):
@@ -148,7 +148,7 @@ async def delete_owner__insert(message: Message, state: FSMContext, redis__db_1:
                       f"| msg [{BotErrors.this_person_not_found}] ")
         return
 
-    if user_id__int == load_config().tgbot.lucifer:
+    if user_id__int == config.lucifer_id:
         await message.answer(BotErrors.you_cant_delete_lucifer)
         logging.error(f"Ошибка при удалении человека из owner role "
                       f"| Owner [{message.from_user.id}] | input {[message.text]} "

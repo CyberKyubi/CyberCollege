@@ -11,7 +11,7 @@ from states.admin_state_machine import AdminTimetableSectionStates
 from storages.redis.storage import RedisStorage
 from handlers.admin.timetable.new_timetable import preparing
 from handlers.owner.deploy.deploy import add_groups
-from config import load_config
+from config_reader import config
 
 
 async def excel_files__input(message: Message, state: FSMContext, session_pool, redis__db_1: RedisStorage, redis__db_2):
@@ -30,10 +30,10 @@ async def excel_files__input(message: Message, state: FSMContext, session_pool, 
     key, path = '', ''
     if not files_data.get('file_1'):
         key = 'file_1'
-        path = load_config().excel_file_1
+        path = config.excel_file_1
     elif not files_data.get('file_2'):
         key = 'file_2'
-        path = load_config().excel_file_2
+        path = config.excel_file_2
 
     value = await get_path(message, path)
     files_data[key] = value
