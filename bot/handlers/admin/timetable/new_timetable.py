@@ -224,7 +224,7 @@ def update_old_week(new_timetable: tuple, old_timetable: tuple):
     group, new_week = new_timetable
     _, old_week = old_timetable
 
-    days = ('Четверг', 'Пятница', 'Суббота')
+    days = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота')
     old_week.update({day_of_week: timetable for day_of_week, timetable in new_week.items() if day_of_week in days})
     return {group: old_week}
 
