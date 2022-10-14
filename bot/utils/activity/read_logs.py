@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta, date
 from calendar import monthrange
 from collections import Counter
@@ -5,9 +6,9 @@ from typing import List, Dict
 
 import pandas as pd
 
-from config_reader import excel_config
+from config_reader import excel_config, get_project_root
 from locales.ru import BotActivity
-from utils.activity.enums import PeriodEnum, RoleEnum, StatementEnum, LogLevelEnum
+from utils.activity.enums import PeriodEnum, RoleEnum, StatementEnum
 from utils.redis_models.logs import LogLineModel, PointModel, SimpleStudentActivityModel, \
     DetailedStudentActivityModel, TimetableCounterModel
 
@@ -37,11 +38,16 @@ class LogMsg:
     }
 
 
-def get_files() -> List[str]:
-    path = '/home/wither/PycharmProjects/college_timetable/bot/logs.log'
-    with open(path, 'r') as file:
-        lines = file.readlines()
-    return lines
+def get_files() -> List[List[str]]:
+    path = os.path.join(get_project_root(), 'bot/logs/')
+    log_files = []
+    for _, _, files in os.walk(path):
+        log_files.extend(files)
+    log_lines = []
+    for file in log_files:
+        with open(path + file, 'r') as f:
+            log_lines.append(f.readlines())
+    return log_lines
 
 
 def get_line_by_level(raw_line: str, level: int):
@@ -63,7 +69,7 @@ def split_logline(raw_line: str):
 
 
 def new_students(role: str = RoleEnum.user, level: int = 20) -> Dict[str, set]:
-    lines = get_files()
+    log_lines = get_files()
     logmsg = '[Зарегистрирован]'
 
     students = {'today': set(), 'week': set(), 'month': set(), 'all_time': set()}
@@ -72,19 +78,20 @@ def new_students(role: str = RoleEnum.user, level: int = 20) -> Dict[str, set]:
         [PeriodEnum.today, PeriodEnum.week, PeriodEnum.month, PeriodEnum.all_time]
     ))
 
-    for raw_line in lines:
-        if get_line_by_level(raw_line, level):
-            line, asctime = split_logline(raw_line)
-            for key, period in periods:
-                period_result = check_period(asctime.date(), period)
-                if role in line and logmsg in line and period_result:
-                    logline_model = line_to_model(line, asctime, line[-1])
-                    students[key].add(logline_model.user_id)
+    for lines in log_lines:
+        for raw_line in lines:
+            if get_line_by_level(raw_line, level):
+                line, asctime = split_logline(raw_line)
+                for key, period in periods:
+                    period_result = check_period(asctime.date(), period)
+                    if role in line and logmsg in line and period_result:
+                        logline_model = line_to_model(line, asctime, line[-1])
+                        students[key].add(logline_model.user_id)
     return students
 
 
 def read_logs(role: str, level: int, period: str, statement, user_id: str = None):
-    lines = get_files()
+    log_lines = get_files()
 
     timetable_values = ['[Сегодня]', '[Завтра]', '[Вся неделя]',
                         '[Понедельник]', '[Вторник]', '[Среда]', '[Четверг]', '[Пятница]', '[Суббота]']
@@ -97,35 +104,36 @@ def read_logs(role: str, level: int, period: str, statement, user_id: str = None
     detailed_student_activity = DetailedStudentActivityModel()
     timetable_counter = TimetableCounterModel()
 
-    for raw_line in lines:
-        if get_line_by_level(raw_line, level):
-            line, asctime = split_logline(raw_line)
-            period_result = check_period(asctime.date(), period)
+    for lines in log_lines:
+        for raw_line in lines:
+            if get_line_by_level(raw_line, level):
+                line, asctime = split_logline(raw_line)
+                period_result = check_period(asctime.date(), period)
 
-            if condition(role, line, user_id, period_result, statement):
-                logline_model = line_to_model(line, asctime, line[-1])
-                message = logline_model.message
-                if statement == StatementEnum.one_student:
-                    all_logline = pd.concat([all_logline, pd.DataFrame(logline_model.dict(), index=[0])])
+                if condition(role, line, user_id, period_result, statement):
+                    logline_model = line_to_model(line, asctime, line[-1])
+                    message = logline_model.message
+                    if statement == StatementEnum.one_student:
+                        all_logline = pd.concat([all_logline, pd.DataFrame(logline_model.dict(), index=[0])])
 
-                match logline_model.point:
-                    case 'Переход':
-                        simple, detailed = simple_student_activity.walking, detailed_student_activity.walking
-                        simple_student_activity.walking = count_simple(simple, message)
-                        detailed_student_activity.walking = count_detailed(detailed, message)
-                    case 'Действие':
-                        simple, detailed = simple_student_activity.action, detailed_student_activity.action
-                        simple_student_activity.action = count_simple(simple, message)
-                        detailed_student_activity.action = count_detailed(detailed, message)
-                    case 'Расписание пар':
-                        if message not in timetable_values:
-                            detailed = detailed_student_activity.timetable
-                            detailed_student_activity.timetable = count_detailed(detailed, message)
+                    match logline_model.point:
+                        case 'Переход':
+                            simple, detailed = simple_student_activity.walking, detailed_student_activity.walking
+                            simple_student_activity.walking = count_simple(simple, message)
+                            detailed_student_activity.walking = count_detailed(detailed, message)
+                        case 'Действие':
+                            simple, detailed = simple_student_activity.action, detailed_student_activity.action
+                            simple_student_activity.action = count_simple(simple, message)
+                            detailed_student_activity.action = count_detailed(detailed, message)
+                        case 'Расписание пар':
+                            if message not in timetable_values:
+                                detailed = detailed_student_activity.timetable
+                                detailed_student_activity.timetable = count_detailed(detailed, message)
 
-                        for key, logmsg in timetable_logmsg.items():
-                            if logmsg in line:
-                                timetable_counter.timetable[key] += 1
-                                simple_student_activity.timetable.last = logmsg
+                            for key, logmsg in timetable_logmsg.items():
+                                if logmsg in line:
+                                    timetable_counter.timetable[key] += 1
+                                    simple_student_activity.timetable.last = logmsg
 
     simple, timetable_days = generate_msg_simple_activity(simple_student_activity, timetable_counter, period)
     generate_msg_detailed_activity(simple_student_activity, detailed_student_activity, timetable_days)
@@ -279,5 +287,3 @@ def get_last(msg: str):
     if msg:
         return msg
     return 'Нет'
-
-

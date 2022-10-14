@@ -27,7 +27,7 @@ config = {
             'level': 'DEBUG',
             'formatter': 'detailed',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'logs.log',
+            'filename': 'logs/logs.log',
             'maxBytes': 1024 * 1024 * 10,  # 10 мб
             'backupCount': 2,
         },
