@@ -6,7 +6,7 @@ from typing import List, Dict
 
 import pandas as pd
 
-from config_reader import excel_config, get_project_root
+from config_reader import app_config, excel_config
 from locales.ru import BotActivity
 from utils.activity.enums import PeriodEnum, RoleEnum, StatementEnum
 from utils.redis_models.logs import LogLineModel, PointModel, SimpleStudentActivityModel, \
@@ -39,7 +39,7 @@ class LogMsg:
 
 
 def get_files() -> List[List[str]]:
-    path = os.path.join(get_project_root(), 'bot/logs/')
+    path = app_config.logs_dir
     log_files = []
     for _, _, files in os.walk(path):
         log_files.extend(files)

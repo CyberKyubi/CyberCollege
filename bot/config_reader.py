@@ -21,6 +21,8 @@ class Config(BaseSettings):
 
     postgresql_dsn: PostgresDsn
 
+    logs_dir: str
+
     class Config:
         env_file = os.path.join(get_project_root(), ".env")
         env_file_encoding = 'utf-8'
