@@ -1,4 +1,5 @@
 from enum import Enum
+from datetime import date
 
 from pydantic import BaseModel
 
@@ -16,3 +17,8 @@ class TimetableModel(BaseModel):
 
     class Config:
         use_enum_values = True
+
+
+class DatesModel(BaseModel):
+    start: date
+    end: date

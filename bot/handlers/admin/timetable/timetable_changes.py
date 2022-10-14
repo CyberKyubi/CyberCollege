@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import traceback
 
 from aiogram import Dispatcher
 from aiogram.types import Message
@@ -12,7 +13,7 @@ from handlers.admin.main_menu.menu import admin__main_menu
 from handlers.user.timetable.timetable_of_classes import generate_weekend, generate_study_day
 from .timetable_section import admin_timetable__section
 from .download_file import get_path
-from .new_timetable import splitting_timetable
+from .new_timetable import NewTimetable
 from utils.timatable.timetable import Timetable
 from utils.validation.send_message import send_message
 from utils.redis_models.timetable_changes import TimetableChangesModel
@@ -179,7 +180,11 @@ async def timetable_changes(
     path = ''
     for co_bld, value in model.college_buildings_info.items():
         path = value['path']
-        redis, _ = Timetable(path, co_bld).get_groups()
+        result = Timetable(path, co_bld).get_groups()
+        if not result:
+            await message.answer(BotErrors.error_in_timetable)
+            return
+        redis, _ = result
         college_groups.update(redis)
 
     # Сокращения для этой функции
@@ -193,11 +198,12 @@ async def timetable_changes(
     # co_bld - college building
     # day_w - day of week
     try:
-        new_tt_dt = await splitting_timetable(model.college_buildings_info, college_groups, timetable_changes=True)
+        obj = NewTimetable()
+        new_tt_dt = await obj.splitting_timetable(model.college_buildings_info, college_groups, timetable_changes=True)
         _, dates = Timetable(path).dates_of_timetable()
         dates__str = generate_date_str(dates)
     except Exception as error:
-        logging.error(error)
+        logging.error(traceback.format_exc())
         await message.answer(BotErrors.error_in_timetable)
     else:
         old_tt_dt = await redis__db_2.get_data('timetable')

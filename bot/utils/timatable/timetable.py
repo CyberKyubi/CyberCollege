@@ -1,11 +1,14 @@
 import re
 import datetime
 import logging
+import traceback
 from typing import Optional, Tuple
 
 import pandas as pd
 from pandas.core.frame import DataFrame
 import numpy as np
+
+from utils.redis_models.timetable import DatesModel
 
 
 class Timetable:
@@ -23,6 +26,7 @@ class Timetable:
         self.timetable_changes: bool = timetable_changes
 
         self.dates = []
+        self.days_of_week = []
 
         self.previous_number = 0
         self.times = ['8.00-9.10', '9.20-10.30', '10.50-12.00', '12.10-13.20', '13.30-14.40', '15.00-16.10',
@@ -325,15 +329,23 @@ class Timetable:
             return timetable_changes
         return timetable
 
-    def get_info_about_file(self) -> tuple[dict, dict]:
+    def get_info_about_file(self) -> tuple[dict, DatesModel, list] | None:
         """
         Забираем из файла расписания информацию: путь к файлу, время расписания.
-        :return:
+        :return: При успехе возвращает информацию.
         """
-        raw_df, _ = self.dates_of_timetable()
+        try:
+            raw_df, _ = self.dates_of_timetable()
 
-        college_building = self.get_college_building(raw_df)
-        return {college_building: {'path': self.excel_file}}, {'start_date': self.dates[0], 'end_date': self.dates[-1]}
+            college_building = self.get_college_building(raw_df)
+        except Exception as error:
+            logging.error(traceback.format_exc())
+        else:
+            return \
+                {college_building: {'path': self.excel_file}}, \
+                DatesModel(start=self.dates[0], end=self.dates[-1]), \
+                self.days_of_week
+        return
 
     def dates_of_timetable(self) -> Tuple[DataFrame, list]:
         raw_df = pd.read_excel(self.excel_file, sheet_name=0)
@@ -356,6 +368,9 @@ class Timetable:
         :param raw_date: Пример: "Понедельник 12 сентября".
         :return:
         """
+        date_elems = raw_date.split()
+        self.days_of_week.append(date_elems[0])
+
         day = int(re.search(r'\d{1,2}', raw_date).group())
         month_number = {'сен': 9, 'окт': 10, 'нояб': 11, 'дек': 12, 'янв': 1, 'фев': 2, 'мар': 3, 'апр': 4, 'мая': 5,
                         'июн': 6, 'июл': 7}
@@ -378,20 +393,25 @@ class Timetable:
         college_building = result[0].replace('Расписание занятий на', '').strip()
         return college_building
 
-    def get_groups(self) -> Tuple[dict, list]:
+    def get_groups(self) -> Tuple[dict, list] | None:
         """
         Собирает все группы из расписания.
-        :return:
+        :return: При успехе возвращает группы.
         """
-        df_for_get_index = pd.read_excel(self.excel_file, sheet_name=0)
-        skiprows = df_for_get_index.index[df_for_get_index['Unnamed: 2'] == 'время'].tolist()[0] + 1
+        try:
+            df_for_get_index = pd.read_excel(self.excel_file, sheet_name=0)
+            skiprows = df_for_get_index.index[df_for_get_index['Unnamed: 2'] == 'время'].tolist()[0] + 1
 
-        df = pd.read_excel(self.excel_file, sheet_name=0, skiprows=skiprows)
-        college_building = self.default_college_building
-        if not college_building:
-            college_building = self.get_college_building(df_for_get_index)
-        groups = df.columns.tolist()[3:]
+            df = pd.read_excel(self.excel_file, sheet_name=0, skiprows=skiprows)
+            college_building = self.default_college_building
+            if not college_building:
+                college_building = self.get_college_building(df_for_get_index)
+            groups = df.columns.tolist()[3:]
 
-        redis = {college_building: groups}
-        db = [{'college_group': group, 'college_building': college_building} for group in groups]
-        return redis, db
+            redis = {college_building: groups}
+            db = [{'college_group': group, 'college_building': college_building} for group in groups]
+        except Exception as error:
+            logging.error(traceback.format_exc())
+        else:
+            return redis, db
+        return

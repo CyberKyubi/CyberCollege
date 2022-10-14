@@ -4,7 +4,7 @@ from aiogram import Dispatcher
 from aiogram.types import Message
 from aiogram.dispatcher.storage import FSMContext
 
-from locales.ru import BotMessages, BotButtons
+from locales.ru import BotMessages, BotButtons, BotErrors
 from states.owner_state_machine import OwnerMainMenuStates, DeployStates
 from keyboards.reply_keyboard_markup import reply_markup
 from storages.redis.storage import RedisStorage
@@ -116,7 +116,11 @@ async def add_groups(files: dict, message: Message, state: FSMContext, session_p
     paths = list(files.values())
     college_groups__redis, college_groups__db = {}, []
     for path in paths:
-        redis, db = Timetable(path).get_groups()
+        result = Timetable(path).get_groups()
+        if not result:
+            await message.answer(BotErrors.error_in_timetable)
+            return
+        redis, db = result
         college_groups__redis.update(redis), college_groups__db.extend(db)
 
     msg = ''.join(
