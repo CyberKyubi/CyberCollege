@@ -29,7 +29,7 @@ async def go_to_new_timetable__button(
     users = await redis__db_1.get_data('users')
     timetable_for_new_week = await redis__db_2.get_data('timetable_for_new_week')
     if timetable_for_new_week:
-        selected_timetable = 'timetable_for_new_week'
+        selected_timetable = 'new_timetable'
     else:
         selected_timetable = 'timetable'
 
