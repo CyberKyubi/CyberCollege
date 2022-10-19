@@ -391,6 +391,7 @@ class Timetable:
         row = row.dropna(axis=1)
         result = [string for elems in row.values for string in elems if 'Расписание занятий на' in string]
         college_building = result[0].replace('Расписание занятий на', '').strip()
+        college_building = college_building.split()[0]
         return college_building
 
     def get_groups(self) -> Tuple[dict, list] | None:

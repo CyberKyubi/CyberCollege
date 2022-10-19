@@ -156,6 +156,7 @@ async def delete_timetable(message: Message, redis__db_2: RedisStorage):
     :return:
     """
     await redis__db_2.delete_key('timetable')
+    await redis__db_2.delete_key('timetable_for_new_week')
     await message.answer(BotMessages.timetable_deleted)
 
 
