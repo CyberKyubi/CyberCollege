@@ -27,10 +27,6 @@ async def new_timetable__button(message: Message, state: FSMContext, redis__db_1
     await state.set_state(AdminTimetableSectionStates.new_timetable)
     await redis__db_1.delete_key('files')
 
-    a = await redis__db_1.get_data('college_groups')
-    list(map(a['Курчатова,16'].remove, ('ПД-122/2', 'ПД-122/3', 'ПД-122/5', 'ПД-122/4')))
-    await redis__db_1.set_data('college_groups', a)
-
 
 async def preparing(
         files: dict,
