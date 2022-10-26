@@ -390,8 +390,8 @@ class Timetable:
         row: DataFrame = df.loc[mask.any(axis=1)]
         row = row.dropna(axis=1)
         result = [string for elems in row.values for string in elems if 'Расписание занятий на' in string]
-        college_building = result[0].replace('Расписание занятий на', '').strip()
-        college_building = college_building.split()[0]
+        college_building = re.search(r'(Курчатова,\s?\d{2}|Туполева,\s?\d{2}а)', result[0]).group()
+        college_building = ''.join(college_building.split())
         return college_building
 
     def get_groups(self) -> Tuple[dict, list] | None:
