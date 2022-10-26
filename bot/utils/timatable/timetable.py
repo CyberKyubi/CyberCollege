@@ -198,6 +198,7 @@ class Timetable:
             return
 
         study_days_df = (raw_timetable
+                         .replace(1, np.nan)
                          .drop(index=df.index[df['Time'] == 'время'].to_list())
                          .dropna(how='all')
                          .pipe(self.fillna_in_dates)
