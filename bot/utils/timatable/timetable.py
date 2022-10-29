@@ -49,7 +49,6 @@ class Timetable:
         :return:
         """
         df.rename(columns={'Unnamed: 0': 'Date', 'Unnamed: 1': 'Number', 'время': 'Time'}, inplace=True)
-        df = df.drop(df.tail(1).index)
 
         column__date_str = (df['Date']
                             .dropna()
@@ -70,6 +69,11 @@ class Timetable:
         cleared_df = pd.merge(column__number, column__time, right_index=True, left_index=True)
         df.update(cleared_df)
         df['Number'] = df['Number'].astype(np.int8)
+
+        last_time = ['17.40-18.50']
+        values = df['Time'].tail(1)
+        if not values.isin(last_time).bool():
+            df = df.drop(df.tail(1).index)
         return df
 
     def check_date_str(self, date_str: str) -> str:
